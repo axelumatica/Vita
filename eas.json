@@ -1,14 +1,14 @@
 {
   "cli": {
-    "version": ">= 9.0.0",
+    "version": ">= 0.47.0",
     "appVersionSource": "remote"
   },
   "build": {
     "preview": {
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "developmentClient": true
       },
-      "developmentClient": true,
       "distribution": "internal"
     },
     "production": {}
