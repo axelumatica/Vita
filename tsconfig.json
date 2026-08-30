@@ -13,5 +13,5 @@
     "types": ["react", "react-native"],
     "lib": ["ES2020", "DOM"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"]
+  "include": ["App.tsx", "src/**/*.ts", "src/**/*.tsx"]
 }

@@ -19,9 +19,6 @@ export {
   BREAKDOWN_INPUT_CHAR_BUDGET,
   ITALIAN_ACTION_VERBS,
   defaultModelFor,
-  getModelCatalog,
-  defaultModelIdFor,
-  PIPELINE_VERSION,
 } from './lior-models';
 
 export type {
@@ -37,6 +34,9 @@ export {
   liorHelpMeThink,
   liorRereadDump,
   LiorError,
+  getModelCatalog,
+  defaultModelIdFor,
+  PIPELINE_VERSION,
 } from './pipeline';
 
 export type {
