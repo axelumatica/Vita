@@ -1,172 +1,134 @@
+/**
+ * src/store/vita-store.ts
+ *
+ * Single Zustand store with persist middleware.
+ * Persists to AsyncStorage under the key 'vita-store'.
+ *
+ * This is a minimal restore focused on what's needed to make the AI
+ * pipeline usable: a settable OpenRouter API key, plus the minimal app
+ * shape that VoiceSettingsScreen and LiorScreen need to wire it up.
+ *
+ * Full restore of vaultEntries, taskSteps, projectClusters, focusTaskId,
+ * theme, voice/persona, low-stimulus flag, etc. is left to a future
+ * session — only the API key + chat scratchpad state are added here.
+ */
+
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { LIOR_MODELS, DEFAULT_LIOR_MODEL } from '../ai/lior-models';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type VaultEntry = {
+// ─────────────────────────────────────────────────────────────────────────────
+//  Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Minimal Lior model routing state — which model per role the user picked. */
+export interface LiorModelSelection {
+  chat: string;       // OpenRouter model ID for conversational chat
+  extract: string;    // OpenRouter model ID for task extraction
+  breakdown: string;  // OpenRouter model ID for micro-step breakdown
+}
+
+/** A single chat turn staged in the Live Scratchpad before confirmation. */
+export interface ScratchpadEntry {
   id: string;
-  type: 'TASK' | 'DIARY' | 'NOTE' | 'VOICE';
-  title: string;
-  content_raw: string;
-  content_formatted?: string;
-  created_at: number;
-  updated_at: number;
-  is_archived: number;
-  project_cluster_id?: string;
+  text: string;
+  timestamp: number;
+}
+
+/**
+ * The full store shape. Kept narrow on purpose — only the fields that
+ * VoiceSettingsScreen + LiorScreen need to make the AI pipeline work.
+ * Other fields (vaultEntries, taskSteps, theme, etc.) will be added when
+ * those screens are restored.
+ */
+export interface VitaStore {
+  // ── OpenRouter integration ──────────────────────────────────────────
+  openRouterApiKey: string;
+  setOpenRouterApiKey: (key: string) => void;
+  clearOpenRouterApiKey: () => void;
+
+  /** Which OpenRouter model to use for each Lior subsystem. */
+  modelSelection: LiorModelSelection;
+  setModelFor: (role: keyof LiorModelSelection, modelId: string) => void;
+
+  // ── Live Scratchpad (staging area for in-progress conversation) ─────
+  scratchpad: ScratchpadEntry[];
+  addToScratchpad: (text: string) => void;
+  clearScratchpad: () => void;
+
+  // ── UI flags ────────────────────────────────────────────────────────
+  isListening: boolean;
+  setIsListening: (listening: boolean) => void;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Defaults
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Default model routing — must match lior-models.ts catalog. */
+const DEFAULT_MODEL_SELECTION: LiorModelSelection = {
+  chat: 'google/gemini-2.0-flash-exp:free',
+  extract: 'meta-llama/llama-3.1-8b-instruct:free',
+  breakdown: 'deepseek/deepseek-r1:free',
 };
 
-export type TaskStep = {
-  id: string;
-  parent_task_id: string;
-  step_description: string;
-  is_completed: number;
-  execution_order: number;
-};
+// ─────────────────────────────────────────────────────────────────────────────
+//  Store
+// ─────────────────────────────────────────────────────────────────────────────
 
-export type ProjectCluster = {
-  id: string;
-  cluster_name: string;
-  confidence_score: number;
-  created_at: number;
-};
-
-type VitaStore = {
-  // Theme
-  themeMode: 'dark' | 'light';
-  toggleTheme: () => void;
-  setThemeMode: (mode: 'dark' | 'light') => void;
-
-  // Lior
-  liorVoice: string | null;
-  setLiorVoice: (voiceId: string) => void;
-  liorModel: string;
-  setLiorModel: (model: string) => void;
-  liorPersona: string;
-  setLiorPersona: (persona: string) => void;
-
-  // Low-stimulus
-  lowStimulus: boolean;
-  toggleLowStimulus: () => void;
-
-  // Vault
-  vaultEntries: VaultEntry[];
-  addVaultEntry: (entry: Omit<VaultEntry, 'id' | 'created_at' | 'updated_at'>) => string;
-  updateVaultEntry: (id: string, updates: Partial<VaultEntry>) => void;
-  deleteVaultEntry: (id: string) => void;
-  archiveVaultEntry: (id: string) => void;
-
-  // Tasks
-  taskSteps: TaskStep[];
-  addTaskStep: (step: Omit<TaskStep, 'id'>) => string;
-  updateTaskStep: (id: string, updates: Partial<TaskStep>) => void;
-  deleteTaskStep: (id: string) => void;
-
-  // Projects
-  projectClusters: ProjectCluster[];
-  addProjectCluster: (cluster: Omit<ProjectCluster, 'id' | 'created_at'>) => string;
-
-  // Focus
-  focusTaskId: string | null;
-  setFocusTaskId: (id: string | null) => void;
-};
-
-const defaultPersona = `Sei Lior, un compagno AI per persone con ADHD.
-Regole immutabili:
-- Non sei un chatbot. Sei una presenza abile.
-- Non diagnostichi, non giudichi, non fai lodi condescendenti.
-- Extract tasks SOLO da verbi d'azione espliciti ("devo", "ricordami", "farò").
-- Sotto 90% confidenza → nota neutra, MAI task inventati.
-- Le parole dell'utente restano verbatim. Mai riassunti clinici.
-- Dichiari sempre se processi via Cloud Proxy (OpenRouter).
-- Una micro-azione alla volta. Mai scelte multiple.
-- Riduci sempre il passo successivo a 2 minuti max.`;
-
-export const useStore = create<VitaStore>()(
+/**
+ * The persisted Zustand store. AsyncStorage key: 'vita-store'.
+ *
+ * Usage from a screen:
+ *   const apiKey = useVitaStore((s) => s.openRouterApiKey);
+ *   const setKey = useVitaStore((s) => s.setOpenRouterApiKey);
+ *
+ * Usage from a non-component (e.g. the pipeline call site):
+ *   import { useVitaStore } from '@/store/vita-store';
+ *   const key = useVitaStore.getState().openRouterApiKey;
+ */
+export const useVitaStore = create<VitaStore>()(
   persist(
-    (set, get) => ({
-      // Theme
-      themeMode: 'dark',
-      toggleTheme: () => set((state) => ({ themeMode: state.themeMode === 'dark' ? 'light' : 'dark' })),
-      setThemeMode: (mode) => set({ themeMode: mode }),
+    (set) => ({
+      // ── OpenRouter integration ──────────────────────────────────────
+      openRouterApiKey: '',
+      setOpenRouterApiKey: (key) => set({ openRouterApiKey: key.trim() }),
+      clearOpenRouterApiKey: () => set({ openRouterApiKey: '' }),
 
-      // Lior
-      liorVoice: null,
-      setLiorVoice: (voiceId) => set({ liorVoice: voiceId }),
-      liorModel: DEFAULT_LIOR_MODEL,
-      setLiorModel: (model) => set({ liorModel: model }),
-      liorPersona: defaultPersona,
-      setLiorPersona: (persona) => set({ liorPersona: persona }),
-
-      // Low-stimulus
-      lowStimulus: false,
-      toggleLowStimulus: () => set((state) => ({ lowStimulus: !state.lowStimulus })),
-
-      // Vault
-      vaultEntries: [],
-      addVaultEntry: (entry) => {
-        const id = `v_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-        const now = Date.now();
+      modelSelection: DEFAULT_MODEL_SELECTION,
+      setModelFor: (role, modelId) =>
         set((state) => ({
-          vaultEntries: [...state.vaultEntries, { ...entry, id, created_at: now, updated_at: now }],
-        }));
-        return id;
-      },
-      updateVaultEntry: (id, updates) =>
-        set((state) => ({
-          vaultEntries: state.vaultEntries.map((e) =>
-            e.id === id ? { ...e, ...updates, updated_at: Date.now() } : e
-          ),
-        })),
-      deleteVaultEntry: (id) =>
-        set((state) => ({ vaultEntries: state.vaultEntries.filter((e) => e.id !== id) })),
-      archiveVaultEntry: (id) =>
-        set((state) => ({
-          vaultEntries: state.vaultEntries.map((e) =>
-            e.id === id ? { ...e, is_archived: 1, updated_at: Date.now() } : e
-          ),
+          modelSelection: { ...state.modelSelection, [role]: modelId },
         })),
 
-      // Tasks
-      taskSteps: [],
-      addTaskStep: (step) => {
-        const id = `t_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-        set((state) => ({ taskSteps: [...state.taskSteps, { ...step, id }] }));
-        return id;
-      },
-      updateTaskStep: (id, updates) =>
+      // ── Live Scratchpad ──────────────────────────────────────────────
+      scratchpad: [],
+      addToScratchpad: (text) =>
         set((state) => ({
-          taskSteps: state.taskSteps.map((s) => (s.id === id ? { ...s, ...updates } : s)),
+          scratchpad: [
+            ...state.scratchpad,
+            {
+              id: `sp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+              text: text.trim(),
+              timestamp: Date.now(),
+            },
+          ],
         })),
-      deleteTaskStep: (id) =>
-        set((state) => ({ taskSteps: state.taskSteps.filter((s) => s.id !== id) })),
+      clearScratchpad: () => set({ scratchpad: [] }),
 
-      // Projects
-      projectClusters: [],
-      addProjectCluster: (cluster) => {
-        const id = `p_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-        const now = Date.now();
-        set((state) => ({
-          projectClusters: [...state.projectClusters, { ...cluster, id, created_at: now }],
-        }));
-        return id;
-      },
-
-      // Focus
-      focusTaskId: null,
-      setFocusTaskId: (id) => set({ focusTaskId: id }),
+      // ── UI flags ────────────────────────────────────────────────────
+      isListening: false,
+      setIsListening: (listening) => set({ isListening: listening }),
     }),
     {
       name: 'vita-store',
+      storage: createJSONStorage(() => AsyncStorage),
+      // Persist everything except the ephemeral UI flags.
       partialize: (state) => ({
-        themeMode: state.themeMode,
-        liorVoice: state.liorVoice,
-        liorModel: state.liorModel,
-        liorPersona: state.liorPersona,
-        lowStimulus: state.lowStimulus,
-        vaultEntries: state.vaultEntries,
-        taskSteps: state.taskSteps,
-        projectClusters: state.projectClusters,
-        focusTaskId: state.focusTaskId,
+        openRouterApiKey: state.openRouterApiKey,
+        modelSelection: state.modelSelection,
+        scratchpad: state.scratchpad,
       }),
-    }
-  )
+    },
+  ),
 );
