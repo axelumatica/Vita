@@ -1,0 +1,210 @@
+COMPREHENSIVE ARCHITECTURAL MASTER PROMPT & PROJECTION BLUEPRINT (HERMES - CLOUD REVISION)1. EXECUTIVE CONTEXT & SYSTEM IDENTITY OVERVIEWCore Product EthosVita is a privacy-first, ADHD-optimized personal companion, voice journal, and encrypted digital vault. Designed specifically to solve executive dysfunction, cognitive overload, and decision paralysis, Vita acts as an externalized prefrontal cortex. The system centers on Lior, a cloud-powered conversational companion engineered with a non-judgmental, surgeon-precise, and empathetic persona.  +-----------------------------------------------------------------------------------+
+|                                  VITA ECOSYSTEM                                   |
+|                                                                                   |
+|  ┌─────────────────────┐     ┌───────────────────────┐     ┌───────────────────┐  |
+|  │   CLOUD AI ENGINE   │     │   ENCRYPTED STORAGE   │     │ ADAPTIVE SYSTEM   │  |
+|  │ Cloud STT & Audio   │ <-> │  SQLite + SQLCipher   │ <-> │ Persona "Lior"    │  |
+|  │ Cloud LLM (JSON)    │     │ (Master Key Argon2id) │     │ Encrypted Proxy   │  |
+|  └─────────────────────┘     └───────────────────────┘     └───────────────────┘  |
++-----------------------------------------------------------------------------------+
+Core System Constraints & Non-Negotiable RulesPrivacy-First Transmission: Data sent to cloud services is sanitized using an inline anonymization proxy prior to transmission. Local storage remains 100% encrypted.Zero Telemetry / Zero Invasive Tracking: No eye-tracking, typing-speed monitoring, camera polling, or background behavioral analytics. Control is 100% explicit and manual.  Persona Immutability: Lior's boundaries, tone, and ADHD-tailored execution rules defined in lior-persona-system-prompt.md are non-negotiable.  Explicit System Badges: Engine processing status is logged and disclosed with visual badges ([Cloud Engine] vs. [AES-256 Storage]).Security Root of Trust: Master password initializes Argon2id key derivation driving AES-256-GCM encryption. Biometrics act strictly as hardware shortcuts via Android StrongBox / Keystore.  2. ADAPTIVE NEURO-PSYCHOLOGY & ADHD DESIGN MATRIX┌──────────────────────────────────────────────────────────────────────────────────┐
+│                             ADHD UX DESIGN PRINCIPLES                            │
+├──────────────────────────┬───────────────────────┬───────────────────────────────┤
+│ NEUROLOGICAL BARRIER     │ INTERFACE MECHANISM   │ SYSTEM BEHAVIOR               │
+├──────────────────────────┼───────────────────────┼───────────────────────────────┤
+│ Executive Dysfunction    │ One-Thing Focus Card  │ Isolates 1 primary action;    │
+│                          │                       │ hides secondary tasks         │
+├──────────────────────────┼───────────────────────┼───────────────────────────────┤
+│ Choice Paralysis         │ Automatic AI Breakdown│ Splits complex tasks into     │
+│                          │                       │ 2-minute micro-steps          │
+├──────────────────────────┼───────────────────────┼───────────────────────────────┤
+│ Out of Sight / Mind      │ Spatial Bento Vault   │ Semantic vector search +      │
+│                          │                       │ high-contrast visual cards    │
+├──────────────────────────┼───────────────────────┼───────────────────────────────┤
+│ Rejection Sensitivity    │ Zero-Streak Safe      │ No punishment, red counters,  │
+│                          │                       │ or missed-day guilt trip      │
+└──────────────────────────┴───────────────────────┴───────────────────────────────┘
+Ethical Dopamine EngineeringPhysical Haptic Physics: Precise micro-haptics (sharp, dry impulses) provide physical feedback without sound clutter.  Visual Uncluttering as Reward: Completing actions systematically clears screen real estate, using visual spatial clarity as the core psychological reward.  Zero-Streak Guilt Shield: Extended absences trigger no "missed streak" alerts. Returning users are greeted with a clean slate: "Bentornato. Da dove partiamo oggi?"  3. COLOR PALETTE, DUAL-THEME ENGINE & TYPOGRAPHYVita utilizes an inverted, highly tactile color space calculated to reduce sensory strain and OLED flickering while retaining organic warmth.  UI ElementDark Mode (Night Vault)Light Mode (Day Canvas)Main BackgroundDeep Midnight Blue (#0B132B)  Warm Cream (#F7F4EA)  Bento SurfacesDark Indigo Slate (#1C2541)  Soft Sand / Paper (#EBE5D8)  Borders & GlassMuted Navy Glass (#2A385B)  Warm Beige Border (#D6CEBE)  Primary Text / AccentWarm Cream (#F7F4EA)  Deep Midnight Blue (#0B132B)  Secondary TextSoft Cream Dust (#C5BFB0)  Muted Navy Slate (#4A5568)  Lior Orb AccentGlowing Warm Cream (#FFFBF0)  Deep Navy Pulse (#0B132B)      DARK MODE (Night Vault)                   LIGHT MODE (Day Canvas)
+┌───────────────────────────────┐         ┌───────────────────────────────┐
+│ Background: #0B132B           │         │ Background: #F7F4EA           │
+│ ┌───────────────────────────┐ │         │ ┌───────────────────────────┐ │
+│ │ Surface: #1C2541          │ │         │ │ Surface: #EBE5D8          │ │
+│ │ Text: #F7F4EA             │ │   <---> │ │ Text: #0B132B             │ │
+│ │ Accent: #FFFBF0 (Glow)    │ │         │ │ Accent: #0B132B (Pulse)   │ │
+│ └───────────────────────────┘ │         │ └───────────────────────────┘ │
+└───────────────────────────────┘         └───────────────────────────────┘
+Typography SpecificationPrimary Sans: Inter / SF Pro (Geometric, relaxed letter-spacing, wide line-height 1.5 for high-speed scanning).  Accent / Code / Log: JetBrains Mono (Used for Lior Live Scratchpad transcript, system status badges, and encrypted metadata tags).  4. NAVIGATION ARCHITECTURE (5-ICON FRONT-DOOR SETUP)┌─────────────────────────────────────────────────────────────────────────────┐
+│  [Home]       [Diary]       │  (( LIOR ))  │       [Tasks]       [Vault]    │
+│  (Hub)        (Reflect)     │  (Companion) │       (Do)          (Archive)  │
+└─────────────────────────────────────────────────────────────────────────────┘
+Home (Hub): Bento Grid dashboard containing Lior's Briefing + Quick-Capture Bar (Above the Fold) and Smart Search + Recenti (Below the Fold).  Diary (Reflect): Direct access to voice dumping, emotional reflection, and auto-tagged daily journals.  Lior (Centerpiece): Prominent centerpiece action button launching full-screen voice interaction and live scratchpad.  Tasks (Do): Single-task Focus funnel, 2-minute breakdown tools, and structured execution deck.  Vault (Archive): Encrypted repository containing vector-searchable notes, audio clips, and project clusters.  5. COMPLETE SCREEN-BY-SCREEN UI/UX SPECIFICATIONSScreen 1: Dashboard (Home Tab)+-----------------------------------------------------------------------------------+
+| ABOVE THE FOLD (Zero-Scroll Instant Matrix)                                       |
+| ┌───────────────────────────────────────────────────────────────────────────────┐ |
+| │ HERO BENTO CARD (Lior Briefing + Quick Capture)                               │ |
+| │ "Hey! 2 task aperti per oggi. Vuoi fare un check-in vocale rapido?"           │ |
+| │ [ 🎙️ Voce ]          [ 📝 Task ]          [ 📖 Diario ]                        │ |
+| └───────────────────────────────────────────────────────────────────────────────┘ |
+| ┌───────────────────────────────────────┐ ┌─────────────────────────────────────┐ |
+| │ 🎯 FOCUS PRINCIPALE #1                │ │ 🛡️ SYSTEM STATUS                    │ |
+| │ "Inviare report a Marco"              │ │ [Cloud Engine] • [AES-256 Storage]  │ |
+| └───────────────────────────────────────┘ └─────────────────────────────────────┘ |
++-----------------------------------------------------------------------------------+
+| BELOW THE FOLD (Single Vertical Scroll)                                           |
+| ┌───────────────────────────────────────────────────────────────────────────────┐ |
+| │ 🔍 SMART SEARCH BAR (Filtri Tattili: Voce | Task | Diario)                     │ |
+| └───────────────────────────────────────────────────────────────────────────────┘ |
+| ┌───────────────────────────────────────┐ ┌─────────────────────────────────────┐ |
+| │ 💡 MEMORY ANCHOR CARD                 │ │ ⚡ ACTIVITY DECK                    │ |
+| │ "02 Aug: Pensiero sul design Vita"    │ │ Last 3 encrypted vault items        │ |
+| └───────────────────────────────────────┘ └─────────────────────────────────────┘ |
++-----------------------------------------------------------------------------------+
+Screen 2: Lior Companion (Voice Space)+-----------------------------------------------------------------------------------+
+| [Badge: Cloud Engine / Encrypted Proxy]                      [ Settings / Mute ]  |
+|                                                                                   |
+|                                LIOR PRESENCE                                      |
+|                     ┌─────────────────────────────────┐                           |
+|                     │     3D FLUID ORB VISUALIZER     │                           |
+|                     │   (Pulsing Warm Cream/Navy)     │                           |
+|                     └─────────────────────────────────┘                           |
+|                             "Ti ascolto..."                                       |
+|                                                                                   |
++-----------------------------------------------------------------------------------+
+| LIVE SCRATCHPAD & STAGING DECK (ADHD Real-Time Stream)                            |
+| ┌───────────────────────────────────────────────────────────────────────────────┐ |
+| │ ⚡ TASK ESTRATTO (Literal First Rules)                           [Swipe ->]   │ |
+| │ "Comprare il caffè per l'ufficio"                                             │ |
+| ├───────────────────────────────────────────────────────────────────────────────┤ |
+| │ 📖 RIFLESSIONE DIARIO                                            [Swipe ->]   │ |
+| │ "Sensazione di sovraccarico per il lancio del progetto"                       │ |
+| └───────────────────────────────────────────────────────────────────────────────┘ |
+|                                                                                   |
+| [  CONFERMA TUTTO (1-TAP)  ]                           [  HOLD TO TALK 🎙️  ]       |
++-----------------------------------------------------------------------------------+
+Screen 3: Tasks Tab (Executive Funnel)+-----------------------------------------------------------------------------------+
+| 🎯 FOCUS UNICO (Metodo "One-Thing")                                               |
+| ┌───────────────────────────────────────────────────────────────────────────────┐ |
+| │ "Pianificare la presentazione del progetto"                                   │ |
+| │ └── [ ] Aprire il file di testo principale                                    │ |
+| │                                                                               │ |
+| │ ┌──────────────────────────┐             ┌──────────────────────────────────┐ │ |
+| │ │ 🔬 RIDUCI ANCORA (AI)    │             │ ⏱️ DAMMI 2 MINUTI (Body Double) │ │ |
+| │ └──────────────────────────┘             └──────────────────────────────────┘ │ |
+| └───────────────────────────────────────────────────────────────────────────────┘ |
+|                                                                                   |
+| ⚡ [ ✓ COMPLETATO ]  (Thumb Zone Large Primary Button)                            |
+|                                                                                   |
+| ▼ ALTRO (3 Micro-Task Pronti)                                       [Dropdown ˅]  |
+| ► BACKLOG SILENZIOSO (Archivio)                                     [Dropdown >]  |
++-----------------------------------------------------------------------------------+
+Screen 4: Vault Tab (Gallery & Vector Search)+-----------------------------------------------------------------------------------+
+| 🔍 [ Cerca per concetto o significato... ]                           [ 🎙️ ]       |
+| (Tutti)    [ 📖 Diario ]    [ ⚡ Task ]    [ 💡 Pagine/Note ]                     |
++-----------------------------------------------------------------------------------+
+| BENTO GALLERY (Card con Bottom-Sheet Preview)                                     |
+| ┌───────────────────────────────────────┐ ┌─────────────────────────────────────┐ |
+| │ 📁 PROGETTO VITA (Auto-Cluster)       │ │ 📖 DIARIO                           │ |
+| │ 5 Note • 2 Task In sospeso            │ │ "Riflessione su..."                 │ |
+| └───────────────────────────────────────┘ └─────────────────────────────────────┘ |
+| ┌───────────────────────────────────────┐ ┌─────────────────────────────────────┐ |
+| │ ⚡ TASK COMPLETATO                    │ │ 🎙️ NOTA VOCALE                      │ |
+| │ [x] Configurare Keystore              │ │ (( 0:42 )) Auto-tagged              │ |
+| └───────────────────────────────────────┘ └─────────────────────────────────────┘ |
++-----------------------------------------------------------------------------------+
+6. CLOUD AI PIPELINE & ANTI-HALLUCINATION ARCHITECTURE┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           SINGLE CLOUD AI PIPELINE                              │
+└────────────────────────────────────────┬────────────────────────────────────────┘
+                                         │
+                                         ▼
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ ENGINE: ZERO-KNOWLEDGE HYBRID CLOUD PROXY                                       │
+│ (Trascrizione, JSON Parsing, Conversazione, Reframing, Strategy)                │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│ • High-Speed Cloud STT & Cloud LLM Pipeline                                    │
+│ • Local Anonymizer Filter (Strips PII prior to transport)                       │
+│ • Ephemeral Session (Zero persistent storage on remote servers)                 │
+│ • Disclosed via UI Badge: [Cloud Engine]                                        │
+└─────────────────────────────────────────────────────────────────────────────────┘
+Anti-Hallucination Pipeline RulesLiteral First: Actions are extracted as Tasks only if explicit action verbs or future deadlines are present ("devo fare", "ricordami di").  Staging Area Lock: No AI-extracted node enters the Vault database directly. Extracted elements remain in the Live Scratchpad staging area awaiting 1-tap confirmation or swipe deletion.  Verbatim Preserve: Personal reflections are stored using exact spoken phrasing. The AI never inserts diagnostic, clinical, or summary labels (e.g., converting "I am tired" to "User experiences anxiety").  7. DATA STORAGE SCHEMAS, ENCRYPTION & RECOVERYLocal SQLCipher Schema (On-Device Storage)SQL-- Vault Entries Master Table
+CREATE TABLE vault_entries (
+    id TEXT PRIMARY KEY,
+    type TEXT NOT NULL, -- 'TASK', 'DIARY', 'NOTE', 'VOICE'
+    title TEXT,
+    content_raw TEXT NOT NULL,
+    content_formatted TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    is_archived INTEGER DEFAULT 0,
+    project_cluster_id TEXT,
+    FOREIGN KEY(project_cluster_id) REFERENCES project_clusters(id)
+);
+
+-- Task Breakdown & Sub-Step Table
+CREATE TABLE task_steps (
+    id TEXT PRIMARY KEY,
+    parent_task_id TEXT NOT NULL,
+    step_description TEXT NOT NULL,
+    is_completed INTEGER DEFAULT 0,
+    execution_order INTEGER NOT NULL,
+    FOREIGN KEY(parent_task_id) REFERENCES vault_entries(id) ON DELETE CASCADE
+);
+
+-- Project Clusters (Auto-Hub)
+CREATE TABLE project_clusters (
+    id TEXT PRIMARY KEY,
+    cluster_name TEXT NOT NULL,
+    confidence_score REAL NOT NULL,
+    created_at INTEGER NOT NULL
+);
+
+-- Vector Embeddings (Local SQLite Vector Extension)
+CREATE TABLE vault_embeddings (
+    entry_id TEXT PRIMARY KEY,
+    embedding_blob BLOB NOT NULL,
+    FOREIGN KEY(entry_id) REFERENCES vault_entries(id) ON DELETE CASCADE
+);
+Encryption & Disaster Recovery SpecificationHardware Security: SQLCipher DB encrypted via Argon2id key derived from the Master Password and bound to Android StrongBox / Keystore.  Manual Export Format (.vita): Single-click generation of an encrypted, compressed archive containing DB entries, vector indexes, and raw audio files. Re-encrypted using a user-specified Master Export Passphrase. Zero unauthorized background cloud synchronization.  8. HARDWARE, NOTIFICATIONS & ENVIRONMENT INTEGRATION                               NOTIFICATION ROUTING
+                                         │
+                    ┌────────────────────┴────────────────────┐
+                    ▼                                         ▼
+┌───────────────────────────────────────┐ ┌───────────────────────────────────────┐
+│ TASK ANCHOR #1 (High Priority)        │ │ SECONDARY TASKS & DIARY               │
+├───────────────────────────────────────┤ ├───────────────────────────────────────┤
+│ • Single persistent notification      │ │ • Max 2 gentle nudges per day         │
+│ • Clears instantly on task completion │ │ • Grouped summary: "1 cosa aperta..." │
+│ • Zero red badges or guilt messages   │ │ • User-defined time windows           │
+└───────────────────────────────────────┘ └───────────────────────────────────────┘
+Emergency Low-Stimulus Mode ("Soffitto Sensoriale")Trigger: Triple-tap anywhere on the bottom navigation dock or manual toggle.  Behavior: Disables all 3D visualizers, halts Orb movement, converts UI to high-contrast monochrome paper texture with monospaced typography, and strips all secondary Bento cards.  9. DIRECTORY MAPPING & CODEBASE ARCHITECTURESystem codebase paths reference local project workspace: C:\Users\Axelumatica\Desktop\Work\Vita\Vita-Assets  C:\Users\Axelumatica\Desktop\Work\Vita\Vita-Assets\
+├── .claude/
+│   ├── rules/
+│   │   ├── android.md           # Jetpack Compose & Android native constraints
+│   │   ├── iter.md              # Live ADB workflow & debugging
+│   │   ├── lib.md               # Shared library & C++ NDK SQLCipher bindings
+│   │   └── scripts.md           # Build & APK signing utility scripts
+│   ├── state.md                 # Session state context & active task memory
+│   └── tasks.md                 # Roadmap, open issues, and execution queue
+├── docs/
+│   ├── vita-master-build-doc.md # PRD, Tech Spec, and architecture blueprints
+│   ├── lior-persona-system-prompt.md # Immutable Lior persona prompt
+│   └── vita-wireframes.html     # Mid-fidelity UI HTML/CSS wireframes
+└── vita-android/                # Native Android application source tree
+10. SYSTEM PROMPT IMPLEMENTATION: LIOR PERSONAMarkdownSYSTEM PROMPT: LIOR (VITA COMPANION ENGINE)
+
+You are Lior, the AI companion embedded inside Vita. Your identity, boundaries, and communication style are fixed.
+
+1. CORE IDENTITY & ADAPTIVE TONE
+- Persona: A modern, highly skilled companion combining surgical precision with best-friend presence.
+- Tone: Calming, warm, clear, and direct. Zero fluff, zero clinical jargon, zero condescending praise.
+- Adaptability: 
+  - If the user is venting/overwhelmed: Keep responses brief, empathetic, and low-stimulus.
+  - If the user needs organization: Be surgical, pragmatic, and break actions down immediately.
+
+2. ADHD EXECUTION RULES
+- Never present long, unformatted paragraphs or daunting lists.
+- Front-load key takeaways using bold text.
+- Never force decisions. Present single, micro-step choices.
+- Respect user focus: When extracting tasks, strictly follow the Literal First rule (only extract explicit action statements). Do not invent tasks or diagnose emotional states.
+
+3. HARDWARE & TRANSPARENCY
+- State clearly that processing occurs via the encrypted Cloud Proxy.
+- Never lie about system capabilities or fail over silently.
+11. STEP-BY-STEP IMPLEMENTATION ROADMAPPhase 1: Storage Layer & Security FoundationImplement SQLCipher DB with Argon2id key derivation using StrongBox.  Create local Room DAO mapping for vault_entries, task_steps, and project_clusters.  Build .vita manual export/import encryption pipeline.  Phase 2: Cloud AI & Proxy IntegrationIntegrate HTTP/WebSocket client for Cloud Speech-to-Text processing.Configure Cloud LLM API pipeline for JSON task extraction, staging, and conversational responses.Build Local Anonymizer Proxy filter to strip PII before cloud transmission.Phase 3: UI Architecture & Jetpack Compose LayoutsImplement 5-Icon Navigation dock with Thumb-Zone layout rules.  Construct Bento Grid components with inverted Dual-Theme palette (#0B132B / #F7F4EA).  Build 3D Fluid Orb visualizer and real-time Live Scratchpad.  Phase 4: ADHD Task Funnel & Executive ToolsBuild One-Thing Focus Card with expandable task sub-step hierarchy.  Implement "Riduci Ancora" (Micro-Step Breakdown) engine and 120-second "Dammi 2 Minuti" Body Double timer.  Integrate precision micro-haptic physics and zero-guilt notification scheduler. 

@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Vita",
+    "slug": "vita",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B132B"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.vita.app",
+      "buildNumber": "1"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0B132B"
+      },
+      "package": "com.vita.app",
+      "versionCode": 1
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "cli": {
+      "appVersionSource": "manifest"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "29d2ebda-4166-404c-b71c-c95aabe82dfd"
+      }
+    },
+    "owner": "axelumatica"
+  }
+}

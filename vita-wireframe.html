@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vita — Complete Wireframe & Spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   VITA — DESIGN TOKENS
+   Dark = Night Vault (Deep Midnight Blue + Warm Cream)
+   Light = Day Canvas (Warm Cream + Deep Midnight Blue) — inverted
+   ============================================================ */
+:root{
+  --bg:#0B132B;
+  --surface:#1C2541;
+  --surface-2:#161d38;
+  --border:#2A385B;
+  --text:#F7F4EA;
+  --text-dim:#C5BFB0;
+  --text-faint:#7c8299;
+  --accent:#F7F4EA;
+  --accent-ink:#0B132B;
+  --amber:#F59E0B;
+  --radius-lg:24px;
+  --radius-md:16px;
+  --radius-sm:10px;
+  --font-display:'Inter',sans-serif;
+  --font-body:'Atkinson Hyperlegible',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --shadow-card: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+[data-theme="light"]{
+  --bg:#F7F4EA;
+  --surface:#EBE5D8;
+  --surface-2:#f2ede0;
+  --border:#D6CEBE;
+  --text:#0B132B;
+  --text-dim:#4A5568;
+  --text-faint:#8a90a3;
+  --accent:#0B132B;
+  --accent-ink:#F7F4EA;
+  --shadow-card: inset 0 1px 0 rgba(11,19,43,0.05);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{
+  font-family:var(--font-body);
+  background:#05070f;
+  color:#e9e9ee;
+  min-height:100vh;
+}
+[data-theme="light"] body.themed-root{ background:#efe9da; }
+
+/* ---------- Top chrome ---------- */
+.topbar{
+  position:sticky; top:0; z-index:50;
+  display:flex; align-items:center; gap:16px;
+  padding:14px 22px;
+  background:#0a0d18;
+  border-bottom:1px solid #1a1f30;
+}
+.brand{
+  font-family:var(--font-display); font-weight:800; letter-spacing:0.02em;
+  font-size:18px; color:#F7F4EA; display:flex; align-items:center; gap:8px;
+}
+.brand .orb-dot{
+  width:12px; height:12px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #fffef8, #F7F4EA 45%, #cbb98a 100%);
+  box-shadow:0 0 10px 2px rgba(247,244,234,0.5);
+}
+.subtitle{ font-size:12px; color:#8890a8; font-family:var(--font-mono); }
+.topbar-spacer{flex:1;}
+.theme-toggle{
+  display:flex; background:#141a2b; border:1px solid #23283c; border-radius:999px; padding:3px;
+  font-family:var(--font-mono); font-size:11px;
+}
+.theme-toggle button{
+  border:none; background:transparent; color:#8890a8; padding:6px 12px; border-radius:999px;
+  cursor:pointer; font-family:var(--font-mono); font-size:11px; letter-spacing:0.03em;
+}
+.theme-toggle button.active{ background:#F7F4EA; color:#0B132B; font-weight:600; }
+
+/* ---------- Layout ---------- */
+.app{
+  display:grid;
+  grid-template-columns:220px minmax(0,1fr) 340px;
+  gap:0;
+  min-height:calc(100vh - 53px);
+}
+.screens-nav{
+  border-right:1px solid #1a1f30;
+  padding:18px 12px;
+  position:sticky; top:53px; align-self:start;
+  height:calc(100vh - 53px);
+  overflow-y:auto;
+}
+.nav-group-label{
+  font-family:var(--font-mono); font-size:10px; letter-spacing:0.12em;
+  color:#5b6280; text-transform:uppercase; margin:18px 8px 8px;
+}
+.nav-group-label:first-child{ margin-top:4px; }
+.nav-btn{
+  display:flex; align-items:center; gap:10px;
+  width:100%; text-align:left; padding:9px 10px; margin-bottom:2px;
+  background:transparent; border:none; border-radius:10px;
+  color:#aeb4c9; font-size:13px; font-family:var(--font-body); cursor:pointer;
+  transition:background .15s ease, color .15s ease;
+}
+.nav-btn .ico{ width:18px; text-align:center; font-size:14px; }
+.nav-btn:hover{ background:#141a2b; color:#fff; }
+.nav-btn.active{ background:#F7F4EA; color:#0B132B; font-weight:600; }
+
+.stage{
+  padding:32px 24px;
+  display:flex; justify-content:center; align-items:flex-start;
+}
+
+/* ---------- Right notes panel ---------- */
+.notes-panel{
+  border-left:1px solid #1a1f30;
+  padding:22px 20px;
+  position:sticky; top:53px; align-self:start;
+  height:calc(100vh - 53px);
+  overflow-y:auto;
+}
+.notes-panel h3{
+  font-family:var(--font-display); font-size:13px; letter-spacing:0.04em;
+  color:#F7F4EA; text-transform:uppercase; margin-bottom:4px;
+}
+.notes-panel .screen-tag{
+  font-family:var(--font-mono); font-size:10px; color:#F59E0B; margin-bottom:14px; display:block;
+}
+.note-block{ margin-bottom:18px; }
+.note-block h4{
+  font-size:11px; font-family:var(--font-mono); color:#7f86a3; text-transform:uppercase;
+  letter-spacing:0.06em; margin-bottom:6px;
+}
+.note-block ul{ list-style:none; }
+.note-block li{
+  font-size:12.5px; color:#c7cbdb; line-height:1.55; padding-left:14px; position:relative; margin-bottom:6px;
+}
+.note-block li::before{
+  content:"—"; position:absolute; left:0; color:#4d5470;
+}
+.hint{
+  font-size:11px; color:#5b6280; font-style:italic; margin-top:10px; line-height:1.5;
+}
+
+/* ---------- Phone frame ---------- */
+.phone{
+  width:380px; min-height:780px;
+  background:var(--bg);
+  border-radius:44px;
+  border:10px solid #05070f;
+  outline:1px solid #23283c;
+  position:relative;
+  overflow:hidden;
+  color:var(--text);
+  font-family:var(--font-body);
+  box-shadow:0 30px 60px -20px rgba(0,0,0,0.6);
+}
+.phone::before{
+  content:""; position:absolute; top:10px; left:50%; transform:translateX(-50%);
+  width:120px; height:22px; background:#05070f; border-radius:0 0 16px 16px; z-index:5;
+}
+.phone-scroll{
+  height:780px; overflow-y:auto; padding-top:34px; padding-bottom:6px;
+  scrollbar-width:none;
+}
+.phone-scroll::-webkit-scrollbar{ display:none; }
+
+/* wide (non-phone) panels for design system / stack pages */
+.wide-panel{
+  width:100%; max-width:980px;
+  background:var(--bg);
+  color:var(--text);
+  border-radius:28px;
+  border:1px solid var(--border);
+  padding:36px 40px;
+}
+
+.screen{ display:none; }
+.screen.active{ display:block; }
+.wide-screen{ display:none; }
+.wide-screen.active{ display:block; }
+
+/* ---------- Shared UI atoms ---------- */
+.px{ padding-left:20px; padding-right:20px; }
+.topbar-mini{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:2px 20px 14px;
+  font-family:var(--font-mono); font-size:11px; color:var(--text-dim);
+}
+.status-dot{ width:7px; height:7px; border-radius:50%; background:#4ade80; display:inline-block; margin-right:6px; box-shadow:0 0 6px #4ade80;}
+.icon-btn{
+  width:30px; height:30px; border-radius:9px; border:1px solid var(--border);
+  background:var(--surface); display:inline-flex; align-items:center; justify-content:center;
+  font-size:13px; cursor:help;
+}
+
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-card);
+  padding:18px;
+  margin:0 20px 14px;
+  position:relative;
+}
+.card.tight{ padding:14px; border-radius:var(--radius-md); }
+.eyebrow{
+  font-family:var(--font-mono); font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--text-faint); display:flex; align-items:center; gap:6px; margin-bottom:8px;
+}
+.headline{
+  font-family:var(--font-display); font-weight:600; font-size:19px; line-height:1.3; margin-bottom:6px;
+}
+.body-text{ font-size:14px; line-height:1.55; color:var(--text-dim); }
+
+.btn{
+  font-family:var(--font-body); font-weight:600; font-size:13.5px;
+  border-radius:var(--radius-md); border:1px solid var(--border);
+  padding:12px 14px; text-align:center; cursor:help; background:var(--surface-2); color:var(--text);
+}
+.btn-primary{ background:var(--accent); color:var(--accent-ink); border:none; }
+.btn-row{ display:flex; gap:10px; margin:0 20px 14px; }
+.btn-row .btn{ flex:1; margin:0; }
+
+.pill{
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:var(--font-mono); font-size:11px; padding:7px 12px;
+  border-radius:999px; border:1px solid var(--border); background:var(--surface-2); color:var(--text-dim);
+  cursor:help;
+}
+.pill.on{ background:var(--accent); color:var(--accent-ink); border-color:transparent; font-weight:600; }
+
+.orb-wrap{ display:flex; flex-direction:column; align-items:center; padding:18px 0 6px; }
+.orb{
+  width:120px; height:120px; border-radius:50%;
+  background:radial-gradient(circle at 32% 28%, #fffef9, var(--text) 45%, #b9a97a 100%);
+  box-shadow:0 0 50px 6px rgba(247,244,234,0.25), inset -8px -10px 30px rgba(11,19,43,0.35);
+  animation:breathe 3.2s ease-in-out infinite;
+  cursor:help;
+}
+[data-theme="light"] .orb{
+  background:radial-gradient(circle at 32% 28%, #3b4c86, var(--text) 55%, #050912 100%);
+  box-shadow:0 0 50px 6px rgba(11,19,43,0.18), inset -8px -10px 30px rgba(0,0,0,0.25);
+}
+@keyframes breathe{ 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.045);} }
+.orb-caption{ font-family:var(--font-mono); font-size:12px; color:var(--text-dim); margin-top:12px; }
+
+.bottom-nav{
+  display:flex; justify-content:space-between; align-items:center;
+  margin:10px 14px 16px; padding:10px 8px;
+  background:var(--surface); border:1px solid var(--border); border-radius:22px;
+}
+.bottom-nav .tab{
+  flex:1; text-align:center; font-size:10px; font-family:var(--font-mono); color:var(--text-faint);
+  display:flex; flex-direction:column; align-items:center; gap:4px; cursor:help;
+}
+.bottom-nav .tab .dot{ font-size:16px; }
+.bottom-nav .tab.mid .dot{
+  width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background:var(--accent); color:var(--accent-ink); font-size:15px; margin-top:-22px;
+  box-shadow:0 6px 16px -4px rgba(0,0,0,0.4);
+}
+.bottom-nav .tab.active{ color:var(--text); }
+
+.section-label{
+  font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em; text-transform:uppercase;
+  color:var(--text-faint); margin:18px 20px 8px;
+}
+.accordion{
+  margin:0 20px 12px; border:1px solid var(--border); border-radius:var(--radius-md);
+  background:var(--surface-2); overflow:hidden;
+}
+.accordion .head{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 14px; font-size:13px; font-weight:600; cursor:help;
+}
+.accordion .body{ padding:0 14px 12px; font-size:12.5px; color:var(--text-dim); }
+.accordion .body div{ padding:6px 0; border-top:1px dashed var(--border); }
+.accordion .body div:first-child{ border-top:none; }
+
+.taglist{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+
+.grid2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:0 20px 14px; }
+.grid2 .card{ margin:0; }
+
+.tt{ cursor:help; }
+.info-badge{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:15px; height:15px; border-radius:50%; font-size:9px; font-family:var(--font-mono);
+  background:var(--surface-2); border:1px solid var(--border); color:var(--text-faint);
+  cursor:help; vertical-align:middle; margin-left:5px;
+}
+
+/* Tooltip */
+#tooltip{
+  position:fixed; z-index:999; max-width:260px; display:none;
+  background:#0f1424; color:#f2f2f6; border:1px solid #2b3350;
+  padding:10px 12px; border-radius:10px; font-size:12px; line-height:1.5;
+  font-family:var(--font-body);
+  box-shadow:0 12px 30px -8px rgba(0,0,0,0.6);
+  pointer-events:none;
+}
+#tooltip b{ color:#F59E0B; }
+
+/* ---------- Design system page ---------- */
+.swatch-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:16px 0 28px; }
+.swatch{ border-radius:16px; overflow:hidden; border:1px solid var(--border); cursor:help; }
+.swatch .fill{ height:64px; }
+.swatch .label{ padding:8px 10px; background:var(--surface); font-size:11px; font-family:var(--font-mono); }
+.type-row{ padding:14px 0; border-bottom:1px solid var(--border); }
+.type-row:last-child{ border-bottom:none; }
+.type-sample-display{ font-family:var(--font-display); font-weight:700; font-size:26px; }
+.type-sample-body{ font-family:var(--font-body); font-size:16px; line-height:1.6; max-width:560px; margin-top:4px;}
+.type-sample-mono{ font-family:var(--font-mono); font-size:13px; letter-spacing:0.04em; margin-top:4px;}
+.type-meta{ font-family:var(--font-mono); font-size:11px; color:var(--text-faint); margin-top:6px;}
+
+table.spec-table{ width:100%; border-collapse:collapse; margin:14px 0 26px; font-size:13px; }
+table.spec-table th{
+  text-align:left; font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em;
+  color:var(--text-faint); border-bottom:1px solid var(--border); padding:8px 10px;
+}
+table.spec-table td{ padding:10px; border-bottom:1px solid var(--border); vertical-align:top; color:var(--text-dim); }
+table.spec-table td.strong{ color:var(--text); font-weight:600; }
+.chip{
+  display:inline-block; font-family:var(--font-mono); font-size:10.5px; padding:3px 8px; border-radius:6px;
+  background:var(--surface-2); border:1px solid var(--border); margin:2px 4px 2px 0; color:var(--text-dim);
+}
+h2.ds{ font-family:var(--font-display); font-size:22px; margin:30px 0 4px; }
+h2.ds:first-child{ margin-top:0; }
+p.ds-sub{ color:var(--text-dim); font-size:13.5px; margin-bottom:6px; max-width:640px; }
+</style>
+</head>
+<body class="themed-root" data-theme="dark">
+
+<div class="topbar">
+  <div class="brand"><span class="orb-dot"></span> VITA — Wireframe & Spec</div>
+  <span class="subtitle">Companion app for ADHD · local-first · Lior persona</span>
+  <div class="topbar-spacer"></div>
+  <div class="theme-toggle">
+    <button id="btn-dark" class="active" onclick="setTheme('dark')">NIGHT VAULT</button>
+    <button id="btn-light" onclick="setTheme('light')">DAY CANVAS</button>
+  </div>
+</div>
+
+<div class="app">
+  <!-- ===================== SCREEN NAV ===================== -->
+  <nav class="screens-nav" id="nav"></nav>
+
+  <!-- ===================== STAGE ===================== -->
+  <div class="stage">
+
+    <!-- Wrap all phone screens in one frame; only inner .screen toggles -->
+    <div class="phone" id="phoneWrap">
+      <div class="phone-scroll" id="phoneScroll">
+
+        <!-- ================= 1. ONBOARDING ================= -->
+        <div class="screen" data-screen="onboarding">
+          <div class="orb-wrap">
+            <div class="orb tt" data-tip="Lior's presence orb. Idle breathing animation at ~0.2Hz. First thing the user ever sees — sets the calm, non-corporate tone immediately."></div>
+            <div class="orb-caption">Step 1 of 3</div>
+          </div>
+          <div class="card tt" data-tip="Zero-registration promise stated up front. No email, no password, no account — this single screen removes the #1 ADHD drop-off cause: forms.">
+            <div class="eyebrow">WELCOME</div>
+            <div class="headline">Your data stays on this phone.</div>
+            <div class="body-text">Zero cloud, zero accounts, zero anxiety. Vita works entirely on-device unless you choose to talk to Lior about something complex.</div>
+          </div>
+          <div class="btn-row">
+            <div class="btn btn-primary tt" data-tip="One tap. Generates local encryption keys silently in the background — no visible crypto/setup jargon shown to the user.">Enter Vita →</div>
+          </div>
+
+          <div class="section-label">Step 2 — Real voice test (no forms)</div>
+          <div class="card tt" data-tip="Onboarding IS the product demo. Instead of slides explaining features, Lior asks the user to just talk — proving the value loop in under 10 seconds.">
+            <div class="body-text" style="font-style:italic;">Lior: "Tell me one thing you need to do today, or whatever's on your mind."</div>
+            <div class="pill on" style="margin-top:12px;" data-tip="Hold-to-talk mic button. Mic permission is requested exactly here — not on app launch — following the 'graduated permissions' rule.">🎙 Hold to talk</div>
+          </div>
+
+          <div class="section-label">Step 3 — Instant magic</div>
+          <div class="card tt" data-tip="The captured voice dump is broken down live in front of the user into a Focus Card — this is the 'immediate value loop': onboarding ends the moment real utility appears, dropping the user straight into Home.">
+            <div class="eyebrow">⚡ EXTRACTED</div>
+            <div class="body-text">"Open the report document" → becomes the first Focus Task, visible immediately. Onboarding is already over.</div>
+          </div>
+        </div>
+
+        <!-- ================= 2. HOME ================= -->
+        <div class="screen active" data-screen="home">
+          <div class="topbar-mini">
+            <span class="tt" data-tip="Left status: small breathing dot + 'Lior: Ready'. Always visible, always honest about local vs cloud processing state."><span class="status-dot"></span>Lior: Ready</span>
+            <span style="display:flex; gap:8px;">
+              <span class="icon-btn tt" data-tip="Settings. Opens notification windows, sensory-ceiling toggle, backup export.">⚙</span>
+              <span class="icon-btn tt" data-tip="SOS / Emergency Paralysis Mode. Low-contrast so it never looks alarming, but always one tap away.">🛡</span>
+            </span>
+          </div>
+
+          <div class="orb-wrap">
+            <div class="orb tt" data-tip="120×120 fluid 3D orb (Skia). Idle: breathes at 0.2Hz. Listening: expands 15% and reacts to mic amplitude. Task complete: emits one circular glow wave then returns to rest."></div>
+            <div class="orb-caption">Listening · idle</div>
+          </div>
+
+          <div class="card tt" data-tip="THE single most important component in the app. Occupies ~50–60% of visible mass. Only ONE task is ever shown here — this is the 'One-Thing Method' that removes decision paralysis.">
+            <div class="eyebrow">🎯 FOCUS UNICO <span class="info-badge" data-tip="Lior auto-decomposes any macro task into 2–5 min micro-steps the moment it's captured. The user never sees the breakdown happen — only the current atomic step.">i</span></div>
+            <div class="headline">Send financial report to Marco</div>
+            <div class="body-text tt" data-tip="Micro-step: max 2 minutes, starts with a physical verb (Open / Write / Click). If even this feels too big, 'Reduce further' shrinks it again.">└ Write the 3 key points <em>(active micro-step)</em></div>
+          </div>
+
+          <div class="btn-row">
+            <div class="btn tt" data-tip="🔬 Reduce further: shrinks the active micro-step to a 15-second physical gesture (e.g. 'unlock phone, tap Docs icon'). Haptic: quick double-click. For cognitive-type blocks.">🔬 Reduce further</div>
+            <div class="btn tt" data-tip="⏱ Give me 2 minutes: Orb shrinks into the card as a small pulsing ring and silently 'body-doubles' for 120s. No alarm — at the end Vita just asks 'stop or continue?'. Zero guilt either way. For emotional/sensory-type blocks.">⏱ Give me 2 minutes</div>
+          </div>
+
+          <div class="btn-row">
+            <div class="btn btn-primary tt" data-tip="Primary action, sits at the top of the thumb zone (Fitts's Law). Completing the last micro-step fades the whole card upward and pulls the next task from backlog. Haptic: deep expansive 'pop'.">✓ Done</div>
+          </div>
+
+          <div class="section-label">Below the fold (1 scroll)</div>
+          <div class="card tight tt" data-tip="Smart Search: local vector search across the whole Vault by meaning, not keywords. Also accepts voice input.">🔍 Search by meaning… <span style="float:right;">🎙</span></div>
+          <div class="card tight tt" data-tip="Recent Vault feed — last 3 entries, low visual weight so it never competes with the Focus Card above.">Recent: 3 Vault items</div>
+
+          <div class="bottom-nav">
+            <div class="tab active tt" data-tip="Home / Dashboard — the default landing screen.">🏠<span>Home</span></div>
+            <div class="tab tt" data-tip="Diario — voice-dump journal, zero-friction thought incinerator.">📖<span>Diario</span></div>
+            <div class="tab mid tt" data-tip="Center voice button. Single tap = open Lior conversation. Long-press (hold-to-talk) = instant voice dump from anywhere, no screen change needed.">🎙</div>
+            <div class="tab tt" data-tip="Tasks — full funnel view: focus, next-up, backlog.">⚡<span>Tasks</span></div>
+            <div class="tab tt" data-tip="Vault — searchable long-term memory, Bento gallery.">🗂<span>Vault</span></div>
+          </div>
+        </div>
+
+        <!-- ================= 3. DIARIO ================= -->
+        <div class="screen" data-screen="diario">
+          <div class="topbar-mini">
+            <span class="tt" data-tip="Diario is NOT a chat log and not a diary you have to maintain daily. It's a zero-formatting thought incinerator.">📖 DIARIO</span>
+            <span style="display:flex; gap:8px;">
+              <span class="icon-btn tt" data-tip="Search entries semantically.">🔍</span>
+              <span class="icon-btn tt" data-tip="Filter by date range.">📅</span>
+            </span>
+          </div>
+
+          <div class="card tt" data-tip="Dynamic Capture Bar. No text form, no title field, no folder choice — a single always-ready container. Placeholder text implies 'no judgment' rather than 'fill this in'.">
+            <div class="eyebrow">🎙 HOLD TO DUMP YOUR THOUGHTS</div>
+            <div class="body-text" style="font-style:italic;">"Speak without thinking about the shape…"</div>
+          </div>
+
+          <div class="card tt" data-tip="Latest Entry Card is split top/bottom: TOP = user's exact words (never a creative AI summary — this is the anti-hallucination 'Literal First' rule). BOTTOM = separated metadata layer (emotion/energy) and any detected task, kept visually distinct so feelings and to-dos never blur together.">
+            <div class="eyebrow">TODAY · 14:30 · VOICE DUMP (1:20)</div>
+            <div class="body-text">"I'm anxious about the Vita launch, worried I forgot the storage part…"</div>
+            <div style="display:flex; gap:8px; margin-top:12px;">
+              <span class="pill tt" data-tip="Auto-tag generated locally from tone + wording. Never overwrites the user's own words.">🏷 #Overload</span>
+              <span class="pill tt" data-tip="Energy tag: low / medium / high / overwhelmed — feeds Lior's adaptive tone matrix.">🔋 Low energy</span>
+            </div>
+            <div class="pill tt" style="margin-top:10px; display:block; text-align:center;" data-tip="Detected task never auto-adds itself to the to-do list. It stays contextual inside the note until the user explicitly taps this button — respecting user agency over what becomes 'work'.">⚡ 1 task detected → + Add to Focus</div>
+          </div>
+
+          <div class="section-label">Previous entries (compact timeline)</div>
+          <div class="card tight tt" data-tip="Older entries recede: smaller font (13px), 70% opacity. Tapping expands in place (240ms) with zero screen change — no context switching.">Yesterday 18:15 · "Idea for haptics handling…"</div>
+          <div class="card tight tt" data-tip="No streaks, no missed-day counters. Silence is never penalized.">24 Aug · "Reflection on sensory overload"</div>
+
+          <div class="bottom-nav">
+            <div class="tab tt" data-tip="Home">🏠<span>Home</span></div>
+            <div class="tab active tt" data-tip="Diario">📖<span>Diario</span></div>
+            <div class="tab mid tt" data-tip="Voice">🎙</div>
+            <div class="tab tt" data-tip="Tasks">⚡<span>Tasks</span></div>
+            <div class="tab tt" data-tip="Vault">🗂<span>Vault</span></div>
+          </div>
+        </div>
+
+        <!-- ================= 4. LIOR VOICE ================= -->
+        <div class="screen" data-screen="lior">
+          <div class="topbar-mini">
+            <span class="tt" data-tip="Closes the voice screen — never loses the transcript, it's already been staged.">✕ Close</span>
+            <span class="tt" data-tip="Audio output toggle — Lior can be muted to text-only mid-conversation.">🔊 Audio: ON</span>
+          </div>
+
+          <div class="card tt" data-tip="This is NOT a chat-bubble UI (no WhatsApp/ChatGPT style feed — bubbles accumulate and cause visual clutter). It's a presence-based, voice-first companion screen, like talking to a real skilled person in the room.">
+            <div class="orb-wrap" style="padding:8px 0 4px;">
+              <div class="orb tt" data-tip="Listening: expands 20%, contour reacts live to mic input. Processing: smooth constant 60fps rotation, zero jitter. Speaking: rhythmic pulsation synced to TTS stream."></div>
+            </div>
+            <div class="body-text" style="text-align:center; margin-top:8px;">"I'm listening. Tell me what's blocking you."</div>
+          </div>
+
+          <div class="card tight tt" data-tip="Live Transcription Strip — replaces the chat bubble feed entirely. Text fades out as it's processed, so nothing accumulates on screen.">░░░ "Trying to figure out how to organize…" ░░░</div>
+
+          <div class="btn-row">
+            <div class="btn tt" data-tip="Puts Lior into Socratic mode: asks exactly ONE short grounding question (max ~10 words), never gives advice or lists. For mental fog / racing thoughts.">🧠 Help me think</div>
+            <div class="btn tt" data-tip="Stops the open dialogue and forces Lior to output exactly one 2-minute micro-step from everything said so far. For overload paralysis.">🎯 Extract just 1 task</div>
+          </div>
+
+          <div class="btn-row">
+            <div class="btn tt" data-tip="Same rule applies as the Diario dump: overwhelmed vocabulary and speech patterns can trigger this without asking first.">🛑 Freeze everything</div>
+            <div class="btn tt" data-tip="Asks Lior to reflect the single emotional throughline back in one neutral sentence — no judgment, no added tasks.">🔍 Reread my dump</div>
+          </div>
+
+          <div class="btn-row">
+            <div class="btn btn-primary tt" data-tip="Dual-state button. Barge-in supported: if the user starts talking while Lior is speaking, audio cuts in <50ms with a sharp haptic click — zero audio overlap.">🎙 Tap to talk / pause</div>
+          </div>
+
+          <div class="section-label">Layout rationale</div>
+          <div class="card tight tt" data-tip="Chosen layout: Option 1, Dual-Panel (Presence + Live Scratchpad). Recommended because pure audio-only companions (like a plain voice mode) work against ADHD processing — dual modality (audio+visual anchors) prevents 'forgetting what was just said'.">Presence (top) + Scratchpad (bottom) — reduces cognitive load vs. audio-only</div>
+
+          <div class="bottom-nav">
+            <div class="tab tt" data-tip="Home">🏠<span>Home</span></div>
+            <div class="tab tt" data-tip="Diario">📖<span>Diario</span></div>
+            <div class="tab mid active tt" data-tip="Currently in Lior voice mode.">🎙</div>
+            <div class="tab tt" data-tip="Tasks">⚡<span>Tasks</span></div>
+            <div class="tab tt" data-tip="Vault">🗂<span>Vault</span></div>
+          </div>
+        </div>
+
+        <!-- ================= 5. SCRATCHPAD STAGING ================= -->
+        <div class="screen" data-screen="scratchpad">
+          <div class="topbar-mini"><span>LIVE SCRATCHPAD · STAGING AREA</span></div>
+          <div class="card tt" data-tip="Anti-hallucination architecture, step 1: 'Literal First'. A task is extracted ONLY when the sentence contains an explicit action verb or future intent ('I need to call…', 'remind me to…'). Doubts or emotions are NEVER converted into tasks — they always go to Diario instead.">
+            <div class="eyebrow">⚡ TASK EXTRACTED <span style="float:right;">swipe →</span></div>
+            <div class="body-text">"Buy coffee tomorrow morning"</div>
+          </div>
+          <div class="card tt" data-tip="Anything below 90% extraction confidence is stored as a neutral raw note — Lior never force-fits an arbitrary tag rather than admit uncertainty.">
+            <div class="eyebrow">📖 JOURNAL REFLECTION <span style="float:right;">swipe →</span></div>
+            <div class="body-text">"Feeling a bit overloaded about the Vita project"</div>
+          </div>
+          <div class="btn-row">
+            <div class="btn btn-primary tt" data-tip="Nothing reaches the permanent Vault without this explicit confirmation. Nothing is ever silently saved.">Confirm all (1 tap)</div>
+            <div class="btn tt" data-tip="Keep talking — reopens the mic without losing what's already staged.">Talk more 🎙</div>
+          </div>
+          <div class="section-label">Micro-actions per card</div>
+          <div class="grid2">
+            <div class="card tight tt" data-tip="Swipe right: confirm and save to Vault/Tasks.">Swipe right → confirm</div>
+            <div class="card tight tt" data-tip="Swipe left: discard if Lior misread the intent. Zero friction, zero confirmation dialog.">Swipe left → discard</div>
+          </div>
+          <div class="card tight tt" data-tip="One tap on the tag re-classifies Task ↔ Journal instantly — the user always has final say over categorization.">Tap the tag → switch Task ⇄ Journal</div>
+        </div>
+
+        <!-- ================= 6. TASKS ================= -->
+        <div class="screen" data-screen="tasks">
+          <div class="topbar-mini">
+            <span class="tt" data-tip="Zero-guilt header — no numeric badge, no 'X overdue' counter.">⚡ ACTIVITY</span>
+            <span class="pill tt" data-tip="Silent Cleanup: one tap moves everything untouched for 14+ days straight into the Vault's Unconscious Archive. Nothing is deleted, it just leaves the active view.">🧹 Silent cleanup</span>
+          </div>
+
+          <div class="card tt" data-tip="Decreasing Visual Mass principle: this card claims ~50% of the screen, full-opacity cream-on-navy, 18px bold. It is the ONLY thing competing for attention.">
+            <div class="eyebrow">🎯 IN PROGRESS NOW</div>
+            <div class="headline" style="font-size:16px;">Send financial report to Marco</div>
+            <div class="body-text">└ Write the 3 key points</div>
+          </div>
+
+          <div class="accordion tt" data-tip="Max 3–5 items, already pre-broken-down by Lior. Closed by default; opacity 70%, smaller font — visually secondary to the Focus card above.">
+            <div class="head">▾ READY FOR LATER (2)</div>
+            <div class="body">
+              <div>Buy USB-C cable for the desk</div>
+              <div>Reply to Luca's email</div>
+            </div>
+          </div>
+
+          <div class="accordion tt" data-tip="Closed by default and low-contrast monospace counter. 'Out of sight, out of stress' — the whole point is that the user doesn't have to look at everything they haven't done.">
+            <div class="head">▸ BACKLOG / UNCONSCIOUS (14) <span style="font-family:var(--font-mono); opacity:.6;">hidden</span></div>
+            <div class="body"><div>Tap to expand — nothing is ever lost, just out of view</div></div>
+          </div>
+
+          <div class="section-label">Rules baked into this screen</div>
+          <div class="card tight tt" data-tip="If a captured task is vague or large ('organize the trip'), Lior refuses to save it as-is — it must first be broken into 2-minute micro-actions before it can even appear here.">Breakdown Engine: no vague task is ever saved whole</div>
+          <div class="card tight tt" data-tip="Swipe right on the Focus card: 'pass to something else' — moves current task to backlog with zero penalty, zero error message.">Swipe right on Focus card → pass, no penalty</div>
+
+          <div class="bottom-nav">
+            <div class="tab tt" data-tip="Home">🏠<span>Home</span></div>
+            <div class="tab tt" data-tip="Diario">📖<span>Diario</span></div>
+            <div class="tab mid tt" data-tip="Voice">🎙</div>
+            <div class="tab active tt" data-tip="Tasks">⚡<span>Tasks</span></div>
+            <div class="tab tt" data-tip="Vault">🗂<span>Vault</span></div>
+          </div>
+        </div>
+
+        <!-- ================= 7. VAULT ================= -->
+        <div class="screen" data-screen="vault">
+          <div class="topbar-mini">🗂 VAULT</div>
+          <div class="card tt" data-tip="Local Vector Search — search by meaning, not exact keywords. On-device vector index (sqlite-vec / Orama), updates the grid live with <30ms latency, no submit button needed.">
+            🔍 "That time I was anxious about work…" <span style="float:right;">🎙</span>
+          </div>
+
+          <div style="display:flex; gap:8px; margin:0 20px 14px; flex-wrap:wrap;">
+            <span class="pill on tt" data-tip="All items, unfiltered.">All (24)</span>
+            <span class="pill tt" data-tip="1-tap tactile filter pill. Selected state fills solid with the accent color plus a short haptic click.">💡 Ideas (12)</span>
+            <span class="pill tt" data-tip="Journal entries only.">📖 Journal (8)</span>
+          </div>
+
+          <div class="grid2">
+            <div class="card tight tt" data-tip="Project Hub — auto-clustered by Lior when semantic correlation to an existing project is >80%. Below that confidence, Lior instead shows a discreet 'Link to [Project]? Yes/No' prompt rather than guessing silently.">
+              <div class="eyebrow">📁 PROJECT HUB</div>
+              <div class="body-text">"Project Vita" · 5 notes · auto-cluster</div>
+            </div>
+            <div class="card tight tt" data-tip="Voice dump card — top half shows the exact transcript (never a paraphrase), bottom half the emotion tag.">
+              <div class="eyebrow">📖 VOICE DUMP</div>
+              <div class="body-text">14 Aug · #Overload</div>
+            </div>
+          </div>
+
+          <div class="card tt" data-tip="Photos/screenshots run through on-device OCR (Apple Vision / MLKit) — text becomes searchable, image is compressed to WebP and encrypted. A dedicated button offers to extract tasks straight from the photo's text.">
+            <div class="eyebrow">📸 VISUAL NOTE (OCR)</div>
+            <div class="body-text">Architecture notes photo</div>
+            <div class="pill" style="margin-top:8px;">⚡ Extract 2 tasks</div>
+          </div>
+
+          <div class="section-label">Why hybrid search (chosen over pure filters or pure search)</div>
+          <div class="card tight tt" data-tip="Traditional note apps fail ADHD users because retrieval requires remembering exact titles. Vault removes that requirement entirely by combining free-form semantic search with zero-typing tactile browsing.">Search bar (concept) + tactile pills (browse) — never forces exact recall</div>
+
+          <div class="bottom-nav">
+            <div class="tab tt" data-tip="Home">🏠<span>Home</span></div>
+            <div class="tab tt" data-tip="Diario">📖<span>Diario</span></div>
+            <div class="tab mid tt" data-tip="Voice">🎙</div>
+            <div class="tab tt" data-tip="Tasks">⚡<span>Tasks</span></div>
+            <div class="tab active tt" data-tip="Vault">🗂<span>Vault</span></div>
+          </div>
+        </div>
+
+        <!-- ================= 8. EMERGENCY MODE ================= -->
+        <div class="screen" data-screen="emergency">
+          <div class="orb-wrap">
+            <div class="orb tt" data-tip="Orb slows to its lowest breathing frequency, deep decompressive glow. No fast movement, no bright flashes — reduced motion is forced."></div>
+          </div>
+          <div class="card tt" data-tip="Triggered by: a dedicated two-finger swipe-down gesture, the SOS button in the top bar, OR automatically when Lior detects overload language/prosody in a voice or text entry (keywords like 'too much', 'can't do this', rapid/breathless speech, long anomalous silences). The system is proactive, not just reactive.">
+            <div class="eyebrow">🛡 EMERGENCY PARALYSIS MODE</div>
+            <div class="body-text" style="font-style:italic;">Lior: "You're overloaded. We're stopping everything."</div>
+          </div>
+          <div class="section-label">Choose the ONE goal for the next 10 minutes</div>
+          <div class="btn-row"><div class="btn tt" data-tip="Deliberately physical, non-productivity actions — grounding the nervous system, not the to-do list.">🥛 Drink a glass of water</div></div>
+          <div class="btn-row"><div class="btn tt" data-tip="Sensory reset suggestion.">🪟 Open the window</div></div>
+          <div class="btn-row"><div class="btn tt" data-tip="No phone, no screen — explicitly anti-productivity.">🛋 Lie down, no phone</div></div>
+          <div class="btn-row">
+            <div class="btn btn-primary tt" data-tip="Freeze the app: disables all Gentle Nudge notifications and hides the Focus Task for the rest of the day. Vita accepts that resting IS the correct action right now.">🛑 Freeze the app for today</div>
+          </div>
+          <div class="hint" style="margin:0 20px;">Triggered manually or automatically — see Design System → Crisis Detection for the full pipeline.</div>
+        </div>
+
+        <!-- ================= 9. SOFT LANDING ================= -->
+        <div class="screen" data-screen="softlanding">
+          <div class="orb-wrap">
+            <div class="orb tt" data-tip="Slowest possible pulse — signals total absence of pressure."></div>
+          </div>
+          <div class="card tt" data-tip="Auto-triggers if the app hasn't been opened in 7+ days. Replaces the normal Bento dashboard entirely — no red counters, no 'X days missed', no accumulated list dumped on the user at once.">
+            <div class="body-text" style="text-align:center; font-style:italic;">"No rush. Your head needed a break."</div>
+          </div>
+          <div class="btn-row">
+            <div class="btn btn-primary tt" data-tip="1-tap: every task from before the absence slides into the Vault's Unconscious Archive. Nothing is deleted — it's just cleared from view so the user can start fresh today.">🧹 Clean reset — start today</div>
+          </div>
+          <div class="btn-row">
+            <div class="btn tt" data-tip="Alternative: keep everything exactly as it was left, for users who want continuity rather than a fresh slate.">👁 Dust it off — keep as-is</div>
+          </div>
+          <div class="hint" style="margin:0 20px;">Lior never asks where the user has been or why. No motive interrogation — just a clean re-entry point.</div>
+        </div>
+
+        <!-- ================= 10. SETTINGS ================= -->
+        <div class="screen" data-screen="settings">
+          <div class="topbar-mini">⚙ SETTINGS</div>
+          <div class="section-label">Notifications</div>
+          <div class="card tight tt" data-tip="One fixed, silent notification living on the lock screen / Dynamic Island, showing ONLY the current Focus micro-step. Disappears the instant it's completed. No sound, no red badge.">Anchor notification — Focus task only, silent</div>
+          <div class="card tight tt" data-tip="Everything else is batched into max 1–2 short nudges per day, only inside user-chosen time windows (e.g. 13:00 & 19:00). Never per-task spam.">Gentle nudge — max 2/day, custom time windows</div>
+
+          <div class="section-label">Sensory</div>
+          <div class="card tight tt" data-tip="Manual-only — Vita explicitly does NOT read camera, eye-tracking, typing-speed, or any biometric sensor to guess mood. Zero-telemetry by design, activated by a discreet triple-tap on the nav bar or a settings toggle.">Sensory Ceiling mode — manual trigger, zero telemetry</div>
+
+          <div class="section-label">Security & backup</div>
+          <div class="card tight tt" data-tip="Local database encrypted via the device's Secure Enclave / Keystore, unlocked with biometrics or PIN. No server ever sees this data.">On-device encryption — Secure Enclave / Keystore</div>
+          <div class="card tight tt" data-tip="1-tap export of a single encrypted .vita file, password-protected, saved wherever the user chooses (USB drive, local folder). Manual — no background sync daemon draining battery.">Export encrypted backup (.vita) — 1 tap, manual</div>
+
+          <div class="section-label">Widgets</div>
+          <div class="card tight tt" data-tip="1×1 widget: tap = instant voice dump. 2×2 widget: shows the Focus card with a tappable Done button, directly from the home screen — no need to open the app.">Home-screen widgets (1×1 orb / 2×2 focus card)</div>
+          <div class="card tight tt" data-tip="Compact: icon + current micro-step only. Expanded (long-press): Done / Reduce / 2-Minutes — all without opening the full app.">Dynamic Island / Live Activity — compact & expanded states</div>
+        </div>
+
+      </div> <!-- /phone-scroll -->
+    </div> <!-- /phone -->
+
+    <!-- ================= WIDE: DESIGN SYSTEM ================= -->
+    <div class="wide-screen" data-screen="designsystem">
+      <div class="wide-panel">
+        <h2 class="ds">Color system</h2>
+        <p class="ds-sub">Fully invertible palette — Night Vault and Day Canvas swap background/accent roles 1:1 to preserve identity in both modes. No pure black/white anywhere (reduces OLED flicker + visual fatigue).</p>
+        <div class="swatch-row">
+          <div class="swatch tt" data-tip="Main background, both screens & nav shell."><div class="fill" style="background:#0B132B;"></div><div class="label">Deep Midnight Blue<br>#0B132B</div></div>
+          <div class="swatch tt" data-tip="Bento card / surface background, dark mode."><div class="fill" style="background:#1C2541;"></div><div class="label">Dark Indigo Slate<br>#1C2541</div></div>
+          <div class="swatch tt" data-tip="Hairline borders — never a hard shadow, always a soft edge."><div class="fill" style="background:#2A385B;"></div><div class="label">Muted Navy Glass<br>#2A385B</div></div>
+          <div class="swatch tt" data-tip="Primary text + Lior's presence accent, dark mode."><div class="fill" style="background:#F7F4EA;"></div><div class="label">Warm Cream<br>#F7F4EA</div></div>
+          <div class="swatch tt" data-tip="Secondary text — labels, dates, metadata."><div class="fill" style="background:#C5BFB0;"></div><div class="label">Soft Cream Dust<br>#C5BFB0</div></div>
+          <div class="swatch tt" data-tip="Functional priority/urgency color — held constant across both themes since it's semantic, not thematic."><div class="fill" style="background:#F59E0B;"></div><div class="label">Warm Amber (priority)<br>#F59E0B</div></div>
+          <div class="swatch tt" data-tip="Day Canvas background — warm cream, replaces the deep navy."><div class="fill" style="background:#F7F4EA; border:1px solid #ccc;"></div><div class="label">Warm Cream (bg)<br>#F7F4EA</div></div>
+          <div class="swatch tt" data-tip="Day Canvas surface — soft sand paper tone for cards."><div class="fill" style="background:#EBE5D8;"></div><div class="label">Soft Sand / Paper<br>#EBE5D8</div></div>
+        </div>
+
+        <h2 class="ds">Typography</h2>
+        <p class="ds-sub">Three roles, chosen specifically to reduce ADHD reading fatigue and improve glanceability.</p>
+        <div class="type-row">
+          <div class="type-sample-display">Send financial report to Marco</div>
+          <div class="type-meta">Inter / SF Pro Display · Bold–SemiBold · tight letter-spacing (-0.02em) · headers & Focus Task titles · 20–24pt</div>
+        </div>
+        <div class="type-row">
+          <div class="type-sample-body">Body copy uses Atkinson Hyperlegible — designed to visually disambiguate easily-confused characters (I, l, 1) and read fast at a glance, with generous 150% line height.</div>
+          <div class="type-meta">Atkinson Hyperlegible / SF Pro Text · Regular–Medium · 14–16pt · 1.5 line-height</div>
+        </div>
+        <div class="type-row">
+          <div class="type-sample-mono">14:30 · #OVERLOAD · 00:02:00 REMAINING</div>
+          <div class="type-meta">JetBrains Mono / SF Mono · timers, tags, transcription strip, status indicators only — never body copy</div>
+        </div>
+
+        <h2 class="ds">Surface & motion rules ("Anti-Vibecode Engineering")</h2>
+        <p class="ds-sub">An ADHD brain has a hyper-tuned "clutter radar." Misaligned margins, jank, or inconsistent easing reads as untrustworthy and causes immediate app abandonment — so these are non-negotiable, not nice-to-haves.</p>
+        <table class="spec-table">
+          <tr><th>Rule</th><th>Spec</th></tr>
+          <tr><td class="strong">Corner radius</td><td>16px (small components) / 24px (cards) — soft, tactile, never sharp</td></tr>
+          <tr><td class="strong">Elevation</td><td>No hard drop shadows. Only rgba(255,255,255,0.03–0.05) inset top-edge highlight to simulate lift</td></tr>
+          <tr><td class="strong">Transitions</td><td>60fps deterministic, ease-in-out cubic-bezier, 200–250ms. No jank, ever, on the UI thread</td></tr>
+          <tr><td class="strong">Lior Pulse</td><td>Active/listening state emits a soft cream/navy glow (blur 20px) pulsing at breathing rhythm</td></tr>
+        </table>
+
+        <h2 class="ds">Anti-hallucination extraction rules</h2>
+        <table class="spec-table">
+          <tr><th>Rule</th><th>Behavior</th></tr>
+          <tr><td class="strong">Literal First</td><td>A Task is extracted ONLY from explicit action verbs / future intent ("I need to…", "remind me to…"). Doubt or emotion → always Journal, never Task.</td></tr>
+          <tr><td class="strong">Confidence gate</td><td>Below 90% extraction confidence → saved as a neutral raw note with zero arbitrary tags, rather than guessing.</td></tr>
+          <tr><td class="strong">Staging area</td><td>Nothing writes to the Vault silently. Everything sits in the Scratchpad for 1-tap confirm / swipe-to-discard first.</td></tr>
+          <tr><td class="strong">No creative summaries</td><td>The user's exact words are preserved verbatim in Journal entries — Lior never reframes them into a clinical-sounding paraphrase.</td></tr>
+          <tr><td class="strong">Project clustering</td><td>Auto-cluster into a Project Hub only above 80% semantic correlation; below that, ask via a discreet inline Yes/No prompt.</td></tr>
+        </table>
+
+        <h2 class="ds">Haptics map</h2>
+        <table class="spec-table">
+          <tr><th>Event</th><th>Pattern</th><th>Purpose</th></tr>
+          <tr><td class="strong">Micro-step complete</td><td>Single sharp tap, ~10ms</td><td>Fast confirmation, doesn't break flow</td></tr>
+          <tr><td class="strong">Focus task complete</td><td>Deep "pop" + decaying vibration, ~50ms</td><td>Physical sensation of "weight removed" — ethical dopamine</td></tr>
+          <tr><td class="strong">Reduce further</td><td>Two-step mechanical click, 5ms–pause–5ms</td><td>Feels like the task is being "split apart"</td></tr>
+          <tr><td class="strong">2-minute timer</td><td>Imperceptible pulse every 30s</td><td>Anchors presence without demanding attention</td></tr>
+          <tr><td class="strong">Barge-in interrupt</td><td>Short dull stop, ~20ms</td><td>Confirms Lior has stopped talking instantly</td></tr>
+          <tr><td class="strong">Enter Emergency Mode</td><td>Fluid decompressive wave, fades over 200ms</td><td>Immediate sensory relaxation cue</td></tr>
+        </table>
+        <p class="ds-sub">No system sounds anywhere — precision haptics only, so the app stays silent-safe in any environment (chosen explicitly over haptics+sound).</p>
+
+        <h2 class="ds">Ethical gamification (Neuro-Dopamine Loop)</h2>
+        <table class="spec-table">
+          <tr><th>Principle</th><th>What it replaces</th></tr>
+          <tr><td class="strong">Visual uncluttering as reward</td><td>Not points/badges — completing tasks makes the UI emptier & calmer, which <em>is</em> the reward</td></tr>
+          <tr><td class="strong">Zero-streak-safe</td><td>No streak counters that can be "lost." 4 days away → "Welcome back. Where do we start today?"</td></tr>
+          <tr><td class="strong">Thumb-zone law (Fitts's Law)</td><td>All primary actions live in the bottom third of the screen — reachable without repositioning grip</td></tr>
+          <tr><td class="strong">Modified Zeigarnik relief</td><td>Completed tasks visually dissolve (color fade) instead of just vanishing — gives the brain an explicit "closure" signal</td></tr>
+        </table>
+
+        <h2 class="ds">Crisis detection pipeline</h2>
+        <p class="ds-sub">Text/voice input → local NLP scans for overload markers (keywords: "too much", "can't do this", "stuck"; also short/incoherent sentence structure) + local prosody scan (rapid breathless speech, anomalous long pauses). If the overload score crosses threshold → task staging is auto-suspended and the UI transitions straight to Emergency Mode's two soft-trigger options, without the user needing to find the SOS button themselves. Explicitly NOT biometric/camera-based — text & voice content only, fully on-device, nothing leaves the phone for this check.</p>
+      </div>
+    </div>
+
+    <!-- ================= WIDE: TECH STACK ================= -->
+    <div class="wide-screen" data-screen="stack">
+      <div class="wide-panel">
+        <h2 class="ds">Recommended tech stack</h2>
+        <p class="ds-sub">This reflects the final direction from the brainstorm: a fast, free-tier, cloud-assisted architecture (on-device SLM + hardware encryption were deliberately dropped mid-project for build speed — flagged below).</p>
+
+        <table class="spec-table">
+          <tr><th>Layer</th><th>Choice</th><th>Why</th></tr>
+          <tr><td class="strong">Mobile UI</td><td>React Native (Expo) + TypeScript</td><td>One codebase for iOS & Android, huge free ecosystem, native module access for haptics</td></tr>
+          <tr><td class="strong">Animation engine</td><td>React Native Reanimated 3</td><td>Runs on the native UI thread — required for the 60fps Orb & card-state animations with zero JS-bridge jank</td></tr>
+          <tr><td class="strong">Graphics / Orb</td><td>React Native Skia</td><td>Canvas-level control for the fluid 3D-feeling orb and glow effects</td></tr>
+          <tr><td class="strong">Gestures</td><td>React Native Gesture Handler</td><td>Native-feeling swipe-to-discard, swipe-to-pass, two-finger emergency gesture</td></tr>
+          <tr><td class="strong">Backend engine</td><td>Rust (tokio async runtime)</td><td>"Fast AF" per explicit requirement; tokio + reqwest keeps the LLM-routing logic simple for AI pair-programming</td></tr>
+          <tr><td class="strong">Local storage</td><td>SQLite via rusqlite (bundled)</td><td>Sub-millisecond queries, zero setup friction, free forever</td></tr>
+          <tr><td class="strong">Data layer / ORM</td><td>Drizzle ORM</td><td>Lightweight, type-safe schema definitions Claude Code can reason about reliably</td></tr>
+          <tr><td class="strong">AI routing</td><td>OpenRouter (free-tier models only)</td><td>$0.00 model access; different tasks routed to different specialist free models (table below)</td></tr>
+          <tr><td class="strong">HTTP client</td><td>reqwest + serde/serde_json</td><td>Standard async JSON plumbing between Rust backend and OpenRouter</td></tr>
+          <tr><td class="strong">Error handling</td><td>anyhow (app) / thiserror (modules)</td><td>Removes ~90% of Rust's custom-error-type verbosity — critical for LLM-assisted "vibecoding"</td></tr>
+          <tr><td class="strong">Vector / semantic search</td><td>sqlite-vec or Orama (on-device)</td><td>Local embedding index for the Vault's meaning-based search, no cloud round-trip</td></tr>
+        </table>
+
+        <h2 class="ds">Free OpenRouter model routing</h2>
+        <table class="spec-table">
+          <tr><th>Task</th><th>Model (:free)</th><th>Why</th></tr>
+          <tr><td class="strong">Lior conversational voice</td><td>google/gemini-2.0-flash-exp:free</td><td>Sub-300ms latency, natural conversational tone</td></tr>
+          <tr><td class="strong">Task extraction / strict JSON</td><td>meta-llama/llama-3.1-8b-instruct:free</td><td>Fast, reliable structured JSON output, low hallucination on constrained schemas</td></tr>
+          <tr><td class="strong">Rust / architecture reasoning</td><td>deepseek/deepseek-r1:free</td><td>Strongest free reasoning model for borrow-checker & lifetime issues</td></tr>
+          <tr><td class="strong">Debugging / stack traces</td><td>deepseek/deepseek-chat (V3)</td><td>Strong at reading cargo check / compiler output and proposing fixes</td></tr>
+        </table>
+
+        <h2 class="ds">Dev workflow (Claude Code + OpenRouter, no auto-compact loops)</h2>
+        <table class="spec-table">
+          <tr><th>Step</th><th>What to do</th></tr>
+          <tr><td class="strong">1. Isolate old code</td><td>Treat the previous codebase as read-only reference in a sibling folder — never let Claude Code scan it wholesale</td></tr>
+          <tr><td class="strong">2. One module per session</td><td>Never ask for "the whole app" — one Rust file or one screen per prompt</td></tr>
+          <tr><td class="strong">3. Validate, don't eyeball</td><td><code>cargo check</code> for Rust, <code>npx tsc --noEmit</code> for TS — both run in ~1s and catch nearly everything before it hits the phone</td></tr>
+          <tr><td class="strong">4. Wireless deploy</td><td>Pair the phone once via <code>adb pair</code> / <code>adb connect</code> over Wi-Fi, then <code>npx expo start</code> — hot-reload &lt;1s, no cable needed again</td></tr>
+          <tr><td class="strong">5. Hard context reset</td><td>After each successful <code>git commit</code>, run <code>/compact</code> or start a fresh terminal session to prevent auto-compacting mid-task</td></tr>
+        </table>
+
+        <h2 class="ds">⚠ Architecture pivot — flagged for the record</h2>
+        <p class="ds-sub">Mid-brainstorm the project deliberately dropped two earlier "non-negotiable" pillars in favor of build speed: <b>on-device SLM execution</b> (Whisper.cpp/llama.cpp) and <b>hardware-level SQLCipher encryption</b>. The current direction uses plain SQLite + OpenRouter cloud calls for the Lior engine, with encryption/security to be revisited later. The UX/UI specs on every other screen in this file (privacy framing, "Local Engine" badges, encryption copy) reflect the <em>original</em> local-first vision — reconcile this before implementation, since several on-screen strings (e.g. "Zero cloud, zero accounts") currently promise more than the pivoted architecture delivers.</p>
+      </div>
+    </div>
+
+  </div> <!-- /stage -->
+
+  <!-- ===================== NOTES PANEL ===================== -->
+  <aside class="notes-panel" id="notesPanel"></aside>
+</div>
+
+<div id="tooltip"></div>
+
+<script>
+const SCREENS = [
+  {group:"Journey", id:"onboarding", label:"Onboarding", icon:"①",
+    notes:{
+      "Purpose":["First-run flow. Goal: prove value in under 10 seconds, not explain features."],
+      "Rules":["Zero registration — no email/password","Mic permission requested only at the voice test step, not on launch","Notification permission requested only after first task completion"]
+    }},
+  {group:"Journey", id:"home", label:"Home / Dashboard", icon:"⌂",
+    notes:{
+      "Purpose":["Daily landing screen. Decompression space, not a to-do list."],
+      "Key rule":["Exactly ONE active task ever shown (One-Thing Method)"],
+      "Gestures":["Swipe right on Focus card → pass to backlog, no penalty","Long-press mic tab → instant hold-to-talk dump from anywhere"]
+    }},
+  {group:"Journey", id:"diario", label:"Diario", icon:"✎",
+    notes:{
+      "Purpose":["Zero-friction voice journal — 'thought incinerator', not a diary chore."],
+      "Structure":["Entry card = original transcript (top) + metadata/task layer (bottom), kept visually separate"],
+      "Gestures":["Press & hold center → instant hands-free recording","Swipe left on a note → archive to Vault, no confirm dialog"]
+    }},
+  {group:"Journey", id:"lior", label:"Lior — Voice Mode", icon:"◉",
+    notes:{
+      "Purpose":["Presence-based companion screen — explicitly NOT a chat-bubble UI."],
+      "Layout":["Dual-panel: Presence orb (top) + Live Scratchpad (bottom) — chosen over pure audio for ADHD dual-modality processing"],
+      "Behavior":["Barge-in interrupt <50ms","Pause buffer waits up to 3.5–4s of silence before processing — lets the user search for words"]
+    }},
+  {group:"Journey", id:"scratchpad", label:"Extraction Staging", icon:"▤",
+    notes:{
+      "Purpose":["Anti-hallucination checkpoint between voice input and permanent storage."],
+      "Core rule":["Literal First — only explicit action verbs become Tasks; everything else defaults to Journal"],
+      "Gestures":["Swipe right = confirm","Swipe left = discard","Tap tag = reclassify Task ⇄ Journal"]
+    }},
+  {group:"Journey", id:"tasks", label:"Tasks & Backlog", icon:"⚡",
+    notes:{
+      "Purpose":["Funnel, not a list — prevents the 'wall of 20 items' anxiety trigger."],
+      "Visual rule":["Decreasing Visual Mass: Focus 50% → Next-up 70% opacity/smaller → Backlog hidden by default"],
+      "Tools":["🧹 Silent Cleanup moves 14+ day untouched items to archive, non-destructively"]
+    }},
+  {group:"Journey", id:"vault", label:"Vault", icon:"⌘",
+    notes:{
+      "Purpose":["Long-term searchable memory — never a 'digital graveyard'."],
+      "Search":["Hybrid: local vector/semantic search bar + 1-tap tactile category pills"],
+      "Clustering":["Auto Project Hub above 80% semantic confidence; discreet confirm prompt below that"]
+    }},
+  {group:"Recovery", id:"emergency", label:"Emergency Paralysis", icon:"⛑",
+    notes:{
+      "Purpose":["For acute overload — even the 2-minute task feels impossible."],
+      "Trigger":["Manual: 2-finger swipe down, or SOS button","Automatic: local NLP/prosody overload detection"],
+      "Behavior":["Suggests only physical, non-productivity micro-actions","Freeze App silences all nudges for the rest of the day"]
+    }},
+  {group:"Recovery", id:"softlanding", label:"Soft Landing", icon:"↺",
+    notes:{
+      "Purpose":["Re-entry after 7+ days away — zero guilt, zero red counters."],
+      "Options":["Clean Reset — archive everything, start fresh","Dust it off — keep exactly as left"],
+      "Rule":["Lior never asks where the user has been"]
+    }},
+  {group:"System", id:"settings", label:"Settings & Notifications", icon:"⚙",
+    notes:{
+      "Notifications":["Anchor (1 fixed, silent, Focus-task-only) + Gentle Nudge (max 2/day, custom windows)"],
+      "Privacy":["Sensory Ceiling is manual-only — zero biometric or camera telemetry, by design"],
+      "Backup":["Manual 1-tap encrypted .vita export — no background sync daemon"]
+    }},
+  {group:"Reference", id:"designsystem", label:"Design System", icon:"◈",
+    notes:{
+      "Contents":["Color tokens (invertible dark/light)","Typography roles","Anti-vibecode motion/surface rules","Anti-hallucination extraction rules","Haptics map","Ethical gamification principles","Crisis detection pipeline"]
+    }},
+  {group:"Reference", id:"stack", label:"Tech Stack", icon:"⌗",
+    notes:{
+      "Contents":["Full recommended library table","Free OpenRouter model routing","Dev workflow to avoid Claude Code auto-compacting"],
+      "Flag":["Architecture pivot away from on-device encryption/SLM is called out explicitly — reconcile with on-screen privacy copy before building"]
+    }}
+];
+
+const nav = document.getElementById('nav');
+const notesPanel = document.getElementById('notesPanel');
+let lastGroup = null;
+SCREENS.forEach(s=>{
+  if(s.group !== lastGroup){
+    const lbl = document.createElement('div');
+    lbl.className='nav-group-label';
+    lbl.textContent = s.group;
+    nav.appendChild(lbl);
+    lastGroup = s.group;
+  }
+  const b = document.createElement('button');
+  b.className='nav-btn'+(s.id==='home' ? ' active':'');
+  b.dataset.target = s.id;
+  b.innerHTML = `<span class="ico">${s.icon}</span>${s.label}`;
+  b.onclick = ()=> selectScreen(s.id);
+  nav.appendChild(b);
+});
+
+function buildNotes(s){
+  let html = `<h3>${s.label}</h3><span class="screen-tag">${s.group.toUpperCase()} · SCREEN NOTES</span>`;
+  for(const [k,list] of Object.entries(s.notes)){
+    html += `<div class="note-block"><h4>${k}</h4><ul>${list.map(i=>`<li>${i}</li>`).join('')}</ul></div>`;
+  }
+  html += `<div class="hint">Hover any element on the mockup — every button, card, orb and pill has an inline behavior tooltip.</div>`;
+  notesPanel.innerHTML = html;
+}
+
+const phoneWrap = document.getElementById('phoneWrap');
+function selectScreen(id){
+  const s = SCREENS.find(x=>x.id===id);
+  document.querySelectorAll('.nav-btn').forEach(b=> b.classList.toggle('active', b.dataset.target===id));
+
+  const isWide = (id==='designsystem' || id==='stack');
+  phoneWrap.style.display = isWide ? 'none' : 'block';
+
+  document.querySelectorAll('.screen').forEach(el=> el.classList.toggle('active', el.dataset.screen===id));
+  document.querySelectorAll('.wide-screen').forEach(el=> el.classList.toggle('active', el.dataset.screen===id));
+
+  buildNotes(s);
+  document.getElementById('phoneScroll').scrollTop = 0;
+}
+selectScreen('home');
+
+function setTheme(t){
+  document.body.setAttribute('data-theme', t);
+  document.getElementById('btn-dark').classList.toggle('active', t==='dark');
+  document.getElementById('btn-light').classList.toggle('active', t==='light');
+}
+
+// Tooltip engine
+const tip = document.getElementById('tooltip');
+function showTip(e){
+  const el = e.currentTarget;
+  const text = el.getAttribute('data-tip');
+  if(!text) return;
+  tip.innerHTML = text;
+  tip.style.display='block';
+  positionTip(e);
+}
+function positionTip(e){
+  const pad = 16;
+  let x = e.clientX + pad, y = e.clientY + pad;
+  const rect = tip.getBoundingClientRect();
+  if(x + 260 > window.innerWidth) x = e.clientX - 260 - pad;
+  if(y + rect.height > window.innerHeight) y = e.clientY - rect.height - pad;
+  tip.style.left = x+'px';
+  tip.style.top = y+'px';
+}
+function hideTip(){ tip.style.display='none'; }
+document.addEventListener('mouseover', e=>{
+  const el = e.target.closest('[data-tip]');
+  if(el){ showTip({currentTarget:el, clientX:e.clientX, clientY:e.clientY}); }
+});
+document.addEventListener('mousemove', e=>{
+  if(tip.style.display==='block') positionTip(e);
+});
+document.addEventListener('mouseout', e=>{
+  if(e.target.closest('[data-tip]') && !e.relatedTarget?.closest('[data-tip]')) hideTip();
+});
+</script>
+</body>
+</html>
