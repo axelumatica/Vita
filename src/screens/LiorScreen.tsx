@@ -39,6 +39,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/NavigationRoot';
 import { useVitaStore } from '../store/vita-store';
+import type { VaultEntryType } from '../store/vita-store';
 import {
   extractTasks,
   breakdownTask,
@@ -72,13 +73,14 @@ interface ScratchpadMessage {
 export function LiorScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const apiKey = useVitaStore((s) => s.openRouterApiKey);
-  const addToScratchpad = useVitaStore((s) => s.addToScratchpad);
+  const addEntry = useVitaStore((s) => s.addEntry);
   const clearScratchpad = useVitaStore((s) => s.clearScratchpad);
 
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ScratchpadMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [overloadMode, setOverloadMode] = useState(false);
+  const [lastExtraction, setLastExtraction] = useState<ExtractionResult | null>(null);
 
   // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -186,6 +188,9 @@ export function LiorScreen() {
       if (result.items.length === 0) {
         pushMessage('lior', 'Non ho trovato task espliciti. Tutto quello che hai detto è andato nel Diario.');
       } else {
+        // Store the result so the confirm button can persist it.
+        setLastExtraction(result);
+
         const taskItems = result.items.filter((i) => !i.isDiary);
         const diaryItems = result.items.filter((i) => i.isDiary);
         let reply = '';
@@ -201,6 +206,7 @@ export function LiorScreen() {
             reply += `  · ${item.title}\n`;
           });
         }
+        reply += '\n\n👆 Tocca "Conferma" per salvare nel Vault.';
         pushMessage('lior', reply.trim());
       }
     } catch (err) {
@@ -275,10 +281,47 @@ export function LiorScreen() {
           onPress: () => {
             clearScratchpad();
             setMessages([]);
+            setLastExtraction(null);
           },
         },
       ],
     );
+  }
+
+  /**
+   * Persist all items from the most recent extraction into vaultEntries[].
+   * Items with isDiary=false become TASK entries; isDiary=true become DIARY.
+   * Anything below TASK_CONFIDENCE_GATE is marked isLowConfidence.
+   */
+  function handleConfirmAll() {
+    if (!lastExtraction || lastExtraction.items.length === 0) return;
+
+    const TASK_CONFIDENCE_GATE = 0.9;
+    let taskCount = 0;
+    let diaryCount = 0;
+
+    for (const item of lastExtraction.items) {
+      const type: VaultEntryType = item.isDiary ? 'DIARY' : 'TASK';
+      const isLowConfidence = !item.isDiary && item.confidence < TASK_CONFIDENCE_GATE;
+      addEntry({
+        type,
+        title: item.title,
+        content: item.rawSource || item.title,
+        isArchived: false,
+        projectClusterId: null,
+        tags: [],
+        confidence: item.confidence,
+        isLowConfidence,
+      });
+      if (type === 'TASK') taskCount++;
+      else diaryCount++;
+    }
+
+    setLastExtraction(null);
+    const summary = [];
+    if (taskCount > 0) summary.push(`${taskCount} task`);
+    if (diaryCount > 0) summary.push(`${diaryCount} riflession${diaryCount === 1 ? 'e' : 'i'}`);
+    pushMessage('lior', `✅ Salvato nel Vault: ${summary.join(' + ')}.`);
   }
 
   // ── Render ──────────────────────────────────────────────────────────────
@@ -379,6 +422,23 @@ export function LiorScreen() {
           <Text style={styles.shortcutText}>🛑 Ferma tutto</Text>
         </TouchableOpacity>
       </View>
+
+      {/* ── Confirm extracted items ───────────────────────────── */}
+      {lastExtraction && lastExtraction.items.length > 0 && (
+        <View style={styles.confirmRow}>
+          <Text style={styles.confirmLabel}>
+            {lastExtraction.items.filter((i) => !i.isDiary).length} task +{' '}
+            {lastExtraction.items.filter((i) => i.isDiary).length} riflessioni
+          </Text>
+          <TouchableOpacity
+            style={styles.confirmBtn}
+            onPress={handleConfirmAll}
+            disabled={isLoading}
+          >
+            <Text style={styles.confirmBtnText}>✅ Conferma</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* ── Input + Send ──────────────────────────────────────── */}
       <View style={styles.inputRow}>
@@ -542,6 +602,37 @@ const styles = StyleSheet.create({
     color: '#C5BFB0',
     fontSize: 12,
     fontWeight: '600',
+  },
+  confirmRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginHorizontal: 12,
+    marginBottom: 6,
+    backgroundColor: '#161d38',
+    borderWidth: 1,
+    borderColor: '#F7F4EA',
+    borderRadius: 12,
+  },
+  confirmLabel: {
+    color: '#C5BFB0',
+    fontSize: 12,
+    fontWeight: '600',
+    flex: 1,
+    paddingHorizontal: 8,
+  },
+  confirmBtn: {
+    backgroundColor: '#F7F4EA',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  confirmBtnText: {
+    color: '#0B132B',
+    fontSize: 13,
+    fontWeight: '700',
   },
   inputRow: {
     flexDirection: 'row',
