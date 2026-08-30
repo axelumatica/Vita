@@ -1,142 +1,178 @@
+/**
+ * src/screens/TasksScreen.tsx
+ *
+ * Tasks funnel — placeholder build. Shows the focus task + accordion list.
+ * Real breakdown engine + persistence comes when full state is restored.
+ */
+
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { useTheme } from '../design/ThemeProvider';
-import { useStore } from '../store/vita-store';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useVitaStore } from '../store/vita-store';
 
 export function TasksScreen() {
-  const { colors, radius, spacing, font, fontSize } = useTheme();
-  const { vaultEntries, focusTaskId, setFocusTaskId, addTaskStep, updateTaskStep, archiveVaultEntry, taskSteps } = useStore();
-  const [expandedBacklog, setExpandedBacklog] = useState(false);
+  const scratchpad = useVitaStore((s) => s.scratchpad);
+  const [showBacklog, setShowBacklog] = useState(false);
 
-  const focusTask = focusTaskId ? vaultEntries.find(e => e.id === focusTaskId) : null;
-  const focusSteps = taskSteps.filter(s => s.parent_task_id === focusTaskId).sort((a, b) => a.execution_order - b.execution_order);
-  const nextStep = focusSteps.find(s => s.is_completed === 0);
-  const completedCount = focusSteps.filter(s => s.is_completed === 1).length;
-
-  const allTasks = vaultEntries.filter(e => e.type === 'TASK' && !e.is_archived && e.id !== focusTaskId);
-
-  const handleToggleStep = (stepId: string) => {
-    const step = focusSteps.find(s => s.id === stepId);
-    if (step) updateTaskStep(stepId, { is_completed: step.is_completed ? 0 : 1 });
-  };
-
-  const handleCompleteFocus = () => {
-    focusSteps.forEach(s => updateTaskStep(s.id, { is_completed: 1 }));
-    setFocusTaskId(null);
-  };
-
-  const handlePass = () => {
-    if (focusTaskId) archiveVaultEntry(focusTaskId);
-    setFocusTaskId(null);
-  };
+  // For now, treat any scratchpad entry containing an action verb as a candidate task.
+  // Real version will use the store's taskSteps[] + vaultEntries[] typed TASK.
+  const candidateTasks = scratchpad.slice().reverse();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      <View style={[styles.topBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={[styles.topLabel, { color: colors.textFaint, fontFamily: font.mono, fontSize: fontSize.monoSm }]}>⚡ ACTIVITY</Text>
-        {focusTaskId && (
-          <TouchableOpacity onPress={handlePass}>
-            <Text style={[styles.topLabel, { color: colors.textDim, fontFamily: font.mono, fontSize: 10 }]}>🧹 Pass to backlog</Text>
-          </TouchableOpacity>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <View style={styles.focusCard}>
+        <Text style={styles.eyebrow}>🎯 FOCUS UNICO</Text>
+        {candidateTasks[0] ? (
+          <Text style={styles.focusText}>{candidateTasks[0].text}</Text>
+        ) : (
+          <Text style={styles.empty}>Nessun task. Parla con Lior o scrivi nel Diario.</Text>
+        )}
+        {candidateTasks[0] && (
+          <View style={styles.focusActions}>
+            <TouchableOpacity style={styles.actionBtn}>
+              <Text style={styles.actionText}>🔬 Riduci</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionBtn}>
+              <Text style={styles.actionText}>⏱ 2 min</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
 
-      <ScrollView style={[styles.scroll, { backgroundColor: colors.bg }]} showsVerticalScrollIndicator={false}>
-        {/* Focus Card */}
-        <View style={[styles.focusCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.eyebrow, { color: colors.textFaint }]}>🎯 FOCUS OF THE DAY · MAX 1</Text>
-          {focusTask ? (
-            <>
-              <Text style={[styles.headline, { color: colors.text }]}>{focusTask.title}</Text>
-              {nextStep ? (
-                <View style={styles.microRow}>
-                  <TouchableOpacity onPress={() => handleToggleStep(nextStep.id)} style={[styles.checkbox, { borderColor: colors.text }]}>
-                    {nextStep.is_completed === 1 && <Text style={styles.checkMark}>✓</Text>}
-                  </TouchableOpacity>
-                  <Text style={[styles.microText, { color: colors.textDim }]}>
-                    └ {nextStep.step_description} <Text style={[styles.microHint, { color: colors.textFaint }]}>(active micro-step)</Text>
-                  </Text>
-                </View>
-              ) : (
-                <Text style={[styles.doneText, { color: colors.textDim }]}>All steps completed ✓</Text>
-              )}
-              <View style={styles.btnRow}>
-                <TouchableOpacity style={[styles.btnPrimary, { backgroundColor: colors.accent }]} onPress={handleCompleteFocus}>
-                  <Text style={[styles.btnPrimaryText, { color: colors.accentInk }]}>✓ COMPLETATO</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.btnSecondary, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={handlePass}>
-                  <Text style={[styles.btnSecondaryText, { color: colors.textDim }]}>→ Passa</Text>
-                </TouchableOpacity>
-              </View>
-            </>
-          ) : (
-            <Text style={[styles.noFocus, { color: colors.textDim }]}>Seleziona un task dalla lista qui sotto.</Text>
-          )}
-        </View>
+      {candidateTasks[0] && (
+        <TouchableOpacity style={styles.primaryBtn}>
+          <Text style={styles.primaryBtnText}>✓ Fatto</Text>
+        </TouchableOpacity>
+      )}
 
-        {/* Next Steps */}
-        <View style={[styles.section, { marginTop: spacing.md }]}>
-          <TouchableOpacity onPress={() => setExpandedBacklog(!expandedBacklog)} style={[styles.accordionHeader, { borderColor: colors.border }]}>
-            <Text style={[styles.accordionText, { color: colors.textDim }]}>
-              {expandedBacklog ? '▴' : '▾'} PROSSIMI PASSI ({allTasks.length})
-            </Text>
-          </TouchableOpacity>
-          {expandedBacklog && (
-            <View style={[styles.accordionBody, { borderColor: colors.border }]}>
-              {allTasks.slice(0, 5).map(task => (
-                <TouchableOpacity key={task.id} style={[styles.taskItem, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={() => setFocusTaskId(task.id)}>
-                  <Text style={[styles.taskText, { color: colors.text }]}>{task.title}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
+      <View style={styles.accordion}>
+        <TouchableOpacity
+          style={styles.accordionHead}
+          onPress={() => setShowBacklog((v) => !v)}
+        >
+          <Text style={styles.accordionTitle}>
+            {showBacklog ? '▾' : '▸'} ALTRO ({candidateTasks.length - 1})
+          </Text>
+        </TouchableOpacity>
+        {showBacklog && candidateTasks.slice(1).map((entry) => (
+          <View key={entry.id} style={styles.accordionBody}>
+            <Text style={styles.accordionItem}>{entry.text}</Text>
+          </View>
+        ))}
+      </View>
 
-        {/* Backlog */}
-        <View style={[styles.section, { marginTop: spacing.md, marginBottom: spacing.lg }]}>
-          <TouchableOpacity onPress={() => setExpandedBacklog(!expandedBacklog)} style={[styles.accordionHeader, { borderColor: colors.border }]}>
-            <Text style={[styles.accordionText, { color: colors.textDim }]}>
-              {expandedBacklog ? '▴' : '▸'} BACKLOG / ARCHIVIO
-            </Text>
-          </TouchableOpacity>
-          {expandedBacklog && (
-            <View style={[styles.accordionBody, { borderColor: colors.border, opacity: 0.78 }]}>
-              {vaultEntries.filter(e => e.is_archived).slice(0, 5).map(task => (
-                <Text key={task.id} style={[styles.archivedText, { color: colors.textDim }]}>{task.title}</Text>
-              ))}
-            </View>
-          )}
+      {candidateTasks.length === 0 && (
+        <View style={styles.hint}>
+          <Text style={styles.hintText}>
+            I task appariranno qui quando Lior li estrarrà da una conversazione o un dump vocale.
+          </Text>
         </View>
-      </ScrollView>
-    </View>
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  topBar: { paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  topLabel: {},
-  scroll: { flex: 1 },
-  focusCard: { marginHorizontal: 16, marginTop: 16, padding: 18, borderRadius: 24, borderWidth: 1 },
-  eyebrow: { fontSize: 10, letterSpacing: 0.1, textTransform: 'uppercase', marginBottom: 8 },
-  headline: { fontSize: 16, fontWeight: '600', lineHeight: 1.3, marginBottom: 4 },
-  microRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 },
-  checkbox: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  checkMark: { fontSize: 12, color: '#0B132B' },
-  microText: { flex: 1, fontSize: 14, lineHeight: 1.5 },
-  microHint: { fontSize: 12 },
-  doneText: { fontSize: 13, fontStyle: 'italic', textAlign: 'center', paddingVertical: 20 },
-  btnRow: { flexDirection: 'row', gap: 8, marginTop: 14 },
-  btnPrimary: { flex: 1, paddingVertical: 14, borderRadius: 16, alignItems: 'center' },
-  btnPrimaryText: { fontSize: 13.5, fontWeight: '600' },
-  btnSecondary: { flex: 1, paddingVertical: 14, borderRadius: 16, borderWidth: 1, alignItems: 'center' },
-  btnSecondaryText: { fontSize: 13 },
-  noFocus: { fontSize: 14, fontStyle: 'italic', textAlign: 'center', paddingVertical: 20 },
-  section: {},
-  accordionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1 },
-  accordionText: { fontSize: 11 },
-  accordionBody: { paddingVertical: 8, gap: 6, marginTop: 4 },
-  taskItem: { padding: 14, borderRadius: 16, borderWidth: 1, flexDirection: 'row', alignItems: 'center' },
-  taskText: { fontSize: 13, lineHeight: 1.5 },
-  archivedText: { fontSize: 12.5, lineHeight: 1.5 },
+  container: {
+    flex: 1,
+    backgroundColor: '#0B132B',
+  },
+  content: {
+    padding: 16,
+    paddingBottom: 100,
+  },
+  focusCard: {
+    backgroundColor: '#1C2541',
+    borderWidth: 1,
+    borderColor: '#2A385B',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 14,
+  },
+  eyebrow: {
+    color: '#7c8299',
+    fontSize: 11,
+    fontFamily: 'monospace',
+    letterSpacing: 0.8,
+    marginBottom: 10,
+  },
+  focusText: {
+    color: '#F7F4EA',
+    fontSize: 18,
+    fontWeight: '600',
+    lineHeight: 24,
+  },
+  empty: {
+    color: '#7c8299',
+    fontSize: 14,
+    fontStyle: 'italic',
+    lineHeight: 21,
+  },
+  focusActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 16,
+  },
+  actionBtn: {
+    flex: 1,
+    backgroundColor: '#161d38',
+    borderWidth: 1,
+    borderColor: '#2A385B',
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  actionText: {
+    color: '#C5BFB0',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  primaryBtn: {
+    backgroundColor: '#F7F4EA',
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  primaryBtnText: {
+    color: '#0B132B',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  accordion: {
+    backgroundColor: '#161d38',
+    borderWidth: 1,
+    borderColor: '#2A385B',
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  accordionHead: {
+    padding: 14,
+  },
+  accordionTitle: {
+    color: '#C5BFB0',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  accordionBody: {
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+  },
+  accordionItem: {
+    color: '#C5BFB0',
+    fontSize: 13,
+    paddingVertical: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#2A385B',
+  },
+  hint: {
+    marginTop: 20,
+    paddingHorizontal: 4,
+  },
+  hintText: {
+    color: '#7c8299',
+    fontSize: 12,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
 });

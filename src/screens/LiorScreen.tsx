@@ -35,6 +35,9 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../navigation/NavigationRoot';
 import { useVitaStore } from '../store/vita-store';
 import {
   extractTasks,
@@ -67,6 +70,7 @@ interface ScratchpadMessage {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function LiorScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const apiKey = useVitaStore((s) => s.openRouterApiKey);
   const addToScratchpad = useVitaStore((s) => s.addToScratchpad);
   const clearScratchpad = useVitaStore((s) => s.clearScratchpad);
@@ -287,9 +291,17 @@ export function LiorScreen() {
       {/* ── Top bar ─────────────────────────────────────────────── */}
       <View style={styles.topBar}>
         <Text style={styles.processingBadge}>{PROCESSING_DISCLOSURE}</Text>
-        <TouchableOpacity onPress={handleClear} style={styles.clearBtn}>
-          <Text style={styles.clearBtnText}>Svuota</Text>
-        </TouchableOpacity>
+        <View style={styles.topBarRight}>
+          <TouchableOpacity onPress={handleClear} style={styles.clearBtn}>
+            <Text style={styles.clearBtnText}>Svuota</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Settings')}
+            style={styles.settingsBtn}
+          >
+            <Text style={styles.settingsBtnText}>⚙</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* ── Orb + status ───────────────────────────────────────── */}
@@ -423,6 +435,25 @@ const styles = StyleSheet.create({
     color: '#7c8299',
     fontSize: 12,
     fontFamily: 'monospace',
+  },
+  topBarRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  settingsBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: '#1C2541',
+    borderWidth: 1,
+    borderColor: '#2A385B',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  settingsBtnText: {
+    color: '#C5BFB0',
+    fontSize: 14,
   },
   presenceArea: {
     alignItems: 'center',

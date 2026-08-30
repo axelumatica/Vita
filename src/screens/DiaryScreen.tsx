@@ -1,101 +1,185 @@
+/**
+ * src/screens/DiaryScreen.tsx
+ *
+ * Voice-journal "thought incinerator" screen.
+ * Placeholder build: text-input + add to scratchpad.
+ * Future: expo-av voice recording, on-device diary entries separate from
+ * the Lior scratchpad.
+ */
+
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { useTheme } from '../design/ThemeProvider';
-import { useNavigation } from '@react-navigation/native';
-import { useStore } from '../store/vita-store';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import { useVitaStore } from '../store/vita-store';
 
 export function DiaryScreen() {
-  const { colors, radius, spacing, font, fontSize, lineHeight } = useTheme();
-  const navigation = useNavigation<any>();
-  const { addVaultEntry } = useStore();
+  const scratchpad = useVitaStore((s) => s.scratchpad);
+  const addToScratchpad = useVitaStore((s) => s.addToScratchpad);
   const [draft, setDraft] = useState('');
 
-  const handleSave = () => {
-    const text = draft.trim() || 'Pensiero di oggi — registrato via Lior';
-    addVaultEntry({ type: 'DIARY', title: text.slice(0, 30), content_raw: text, is_archived: 0 });
+  function handleAdd() {
+    const text = draft.trim();
+    if (!text) return;
+    addToScratchpad(text);
     setDraft('');
-  };
+  }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.bg }]} showsVerticalScrollIndicator={false}>
-      <View style={[styles.topBar, { backgroundColor: colors.surface, borderBottomColor: colors.border, paddingVertical: 12, paddingHorizontal: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
-        <Text style={[styles.topTitle, { color: colors.text, fontFamily: font.display, fontSize: fontSize.h2, letterSpacing: -0.02 }]}>📖 DIARIO</Text>
-        <Text style={[styles.topSubtitle, { color: colors.textFaint, fontFamily: font.mono, fontSize: fontSize.monoSm }]}>Scrivi prima di organizzare.</Text>
-      </View>
-
-      <View style={[styles.heroCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg, marginHorizontal: 16, marginTop: 10, padding: 18, borderWidth: 1 }]}>
-        <Text style={[styles.eyebrow, { color: colors.accent, fontFamily: font.mono, fontSize: fontSize.monoSm, letterSpacing: 0.1 }]}>🎙 TI ASCOLTO</Text>
-        <Text style={[styles.heroTitle, { color: colors.text, fontFamily: font.display, fontSize: fontSize.h1, lineHeight: lineHeight.title, marginVertical: 4 }]}>Scrivi senza pensare alla forma.</Text>
-        <Text style={[styles.heroDesc, { color: colors.textDim, fontFamily: font.body, fontSize: fontSize.body, lineHeight: lineHeight.body }]}>
-          Una voce non giudicante. Registra, esprimi, poi lascia che Lior organizzi silenziosamente.
-        </Text>
-        <View style={[styles.heroActions, { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md }]}>
-          <TouchableOpacity onPress={() => navigation.navigate('LiorTab')} style={[styles.heroBtn, { flex: 1, backgroundColor: colors.accent, borderRadius: radius.md, paddingVertical: 12, alignItems: 'center' }]}>
-            <Text style={[styles.heroBtnText, { color: colors.accentInk, fontFamily: font.display, fontSize: fontSize.body, fontWeight: '600' }]}>✎ Scrivi</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('LiorTab')} style={[styles.heroBtn, { flex: 1, backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: radius.md, paddingVertical: 12, alignItems: 'center', borderWidth: 1 }]}>
-            <Text style={[styles.heroBtnText, { color: colors.text, fontFamily: font.display, fontSize: fontSize.body, fontWeight: '600' }]}>🎙 Parla</Text>
-          </TouchableOpacity>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <View style={styles.introCard}>
+          <Text style={styles.eyebrow}>📖 DIARIO</Text>
+          <Text style={styles.body}>
+            Scrivi senza pensare alla forma. I tuoi pensieri esatti vanno direttamente
+            nello scratchpad, pronti per essere elaborati da Lior.
+          </Text>
         </View>
-      </View>
 
-      <View style={[styles.entryCard, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg, marginHorizontal: 16, marginTop: spacing.md, padding: 18, borderWidth: 1 }]}>
-        <Text style={[styles.entryMeta, { color: colors.textFaint, fontFamily: font.mono, fontSize: fontSize.monoSm, letterSpacing: 0.08, textTransform: 'uppercase', marginBottom: 4 }]}>OGGI · {new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}</Text>
-        <Text style={[styles.entryBody, { color: colors.text, fontFamily: font.body, fontSize: fontSize.body, lineHeight: lineHeight.body, fontStyle: 'italic', minHeight: 80 }]}>
-          {draft || '"Sono ansioso per il lancio di Vita, ho paura di aver dimenticato qualcosa..."'}
-        </Text>
-      </View>
+        {scratchpad.length > 0 && (
+          <View style={styles.entries}>
+            <Text style={styles.sectionLabel}>ULTIMI PENSIERI</Text>
+            {scratchpad.slice().reverse().map((entry) => (
+              <View key={entry.id} style={styles.entry}>
+                <Text style={styles.entryText}>{entry.text}</Text>
+                <Text style={styles.entryMeta}>
+                  {new Date(entry.timestamp).toLocaleTimeString('it-IT', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </ScrollView>
 
-      {/* Tags + Add-to-focus — real actions */}
-      <View style={{ paddingHorizontal: 16, marginTop: spacing.md }}>
-        <View style={[styles.tagsRow, { flexDirection: 'row', gap: 6, flexWrap: 'wrap' }]}>
-          <Text style={[styles.tag, { backgroundColor: colors.accent, color: colors.accentInk, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, fontFamily: font.mono, fontSize: 10 }]}>#Sovraccarico</Text>
-          <Text style={[styles.tag, { backgroundColor: colors.amber, color: colors.accentInk, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3, fontFamily: font.mono, fontSize: 10 }]}>🔋 Bassa energia</Text>
-        </View>
+      <View style={styles.inputRow}>
+        <TextInput
+          style={styles.input}
+          value={draft}
+          onChangeText={setDraft}
+          placeholder="Scrivi un pensiero…"
+          placeholderTextColor="#7c8299"
+          multiline
+          returnKeyType="default"
+        />
         <TouchableOpacity
-          style={[styles.addToFocus, { backgroundColor: colors.surface2, borderColor: colors.border, borderWidth: 1, borderRadius: radius.md, padding: 10, alignItems: 'center', marginTop: spacing.md }]}
-          onPress={handleSave}
+          style={[styles.addBtn, !draft.trim() && styles.addBtnDisabled]}
+          onPress={handleAdd}
+          disabled={!draft.trim()}
         >
-          <Text style={[styles.addToFocusText, { color: colors.accent, fontFamily: font.mono, fontSize: fontSize.monoSm, letterSpacing: 0.04 }]}>⚡ Salva nel Vault → + Aggiungi al Focus</Text>
+          <Text style={styles.addBtnText}>+</Text>
         </TouchableOpacity>
       </View>
-
-      <Text style={[styles.sectionTitle, { color: colors.textFaint, fontFamily: font.mono, fontSize: 10, letterSpacing: 0.12, textTransform: 'uppercase', marginHorizontal: 16, marginTop: spacing.xl, marginBottom: spacing.md }]}>ENTRATE PRECEDENTI</Text>
-      <TouchableOpacity style={[styles.prevRow, { backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: radius.md, marginHorizontal: 16, marginBottom: spacing.sm, paddingVertical: spacing.md, paddingHorizontal: spacing.lg, borderWidth: 1 }]} onPress={() => navigation.navigate('VaultTab')}>
-        <Text style={[styles.prevTitle, { color: colors.textDim, fontFamily: font.display, fontSize: 15, fontWeight: '600', lineHeight: 1.3 }]}>Idea per la gestione degli haptics...</Text>
-        <Text style={[styles.prevMeta, { color: colors.textFaint, fontFamily: font.mono, fontSize: fontSize.monoSm, marginTop: 2 }]}>Ieri · 18:15</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={[styles.prevRow, { backgroundColor: colors.surface2, borderColor: colors.border, borderRadius: radius.md, marginHorizontal: 16, marginBottom: spacing.sm, paddingVertical: spacing.md, paddingHorizontal: spacing.lg, borderWidth: 1 }]} onPress={() => navigation.navigate('VaultTab')}>
-        <Text style={[styles.prevTitle, { color: colors.textDim, fontFamily: font.display, fontSize: 15, fontWeight: '600', lineHeight: 1.3 }]}>Riflessione su sovraccarico sensoriale</Text>
-        <Text style={[styles.prevMeta, { color: colors.textFaint, fontFamily: font.mono, fontSize: fontSize.monoSm, marginTop: 2 }]}>24 Agosto</Text>
-      </TouchableOpacity>
-
-      <View style={{ height: 120 }} />
-    </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  topBar: { borderBottomWidth: 1 },
-  topTitle: {},
-  topSubtitle: {},
-  heroCard: { borderWidth: 1 },
-  eyebrow: {},
-  heroTitle: {},
-  heroDesc: {},
-  heroActions: {},
-  heroBtn: {},
-  heroBtnText: {},
-  entryCard: { borderWidth: 1 },
-  entryMeta: {},
-  entryBody: {},
-  tagsRow: {},
-  tag: {},
-  addToFocus: {},
-  addToFocusText: {},
-  sectionTitle: {},
-  prevRow: { borderWidth: 1 },
-  prevTitle: {},
-  prevMeta: {},
+  container: {
+    flex: 1,
+    backgroundColor: '#0B132B',
+  },
+  content: {
+    padding: 16,
+    paddingBottom: 100,
+  },
+  introCard: {
+    backgroundColor: '#1C2541',
+    borderWidth: 1,
+    borderColor: '#2A385B',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  eyebrow: {
+    color: '#7c8299',
+    fontSize: 11,
+    fontFamily: 'monospace',
+    letterSpacing: 0.8,
+    marginBottom: 8,
+  },
+  body: {
+    color: '#C5BFB0',
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  entries: {
+    marginTop: 8,
+  },
+  sectionLabel: {
+    color: '#7c8299',
+    fontSize: 10,
+    fontFamily: 'monospace',
+    letterSpacing: 0.8,
+    marginBottom: 10,
+  },
+  entry: {
+    backgroundColor: '#161d38',
+    borderWidth: 1,
+    borderColor: '#2A385B',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
+  },
+  entryText: {
+    color: '#F7F4EA',
+    fontSize: 14,
+    lineHeight: 21,
+    marginBottom: 6,
+  },
+  entryMeta: {
+    color: '#7c8299',
+    fontSize: 11,
+    fontFamily: 'monospace',
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#1C2541',
+    backgroundColor: '#0B132B',
+  },
+  input: {
+    flex: 1,
+    backgroundColor: '#1C2541',
+    borderWidth: 1,
+    borderColor: '#2A385B',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    color: '#F7F4EA',
+    fontSize: 14,
+    maxHeight: 100,
+  },
+  addBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F7F4EA',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addBtnDisabled: {
+    opacity: 0.4,
+  },
+  addBtnText: {
+    color: '#0B132B',
+    fontSize: 22,
+    fontWeight: '700',
+  },
 });
