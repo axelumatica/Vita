@@ -7,7 +7,7 @@
  * the Lior scratchpad.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -17,9 +17,17 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { useVitaStore } from '../store/vita-store';
 import { useTheme } from '../design/ThemeProvider';
+import {
+  startRecording,
+  stopRecording,
+  cancelRecording,
+  isSpeechListening,
+  getActiveRecording,
+} from '../services/voice-recording';
 
 /** Hook that returns theme-aware styles and the colors object for inline use. */
 function useThemedStyles() {
@@ -93,6 +101,36 @@ function useThemedStyles() {
     },
     addBtnDisabled: { opacity: 0.4 },
     addBtnText: { color: colors.accentInk, fontSize: 22, fontWeight: '700' },
+    voiceRow: {
+      flexDirection: 'row',
+      gap: 8,
+      marginBottom: 12,
+    },
+    voiceBtn: {
+      backgroundColor: colors.surface2,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      alignItems: 'center',
+      flex: 1,
+    },
+    voiceBtnRecordingActive: {
+      borderColor: colors.accent,
+      backgroundColor: colors.surface,
+    },
+    voiceBtnText: { color: colors.textDim, fontSize: 13, fontWeight: '600' },
+    recordingInProgress: {
+      backgroundColor: colors.surface2,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      padding: 14,
+      marginBottom: 12,
+      alignItems: 'center',
+    },
+    recordingText: { color: colors.textDim, fontSize: 13, fontStyle: 'italic' },
   });
 
   return { styles, colors };
@@ -105,6 +143,49 @@ export function DiaryScreen() {
   );
   const addEntry = useVitaStore((s) => s.addEntry);
   const [draft, setDraft] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+
+  async function handleStartRecording() {
+    if (isRecording) {
+      // Stop recording - will get result via callback when speech ends
+      setIsRecording(false);
+      setIsTranscribing(true);
+      const audioUri = await stopRecording();
+      // STT result comes via voice-recording callback in LiorScreen pattern
+      // For DiaryScreen, we'll just alert the user the recording stopped
+      Alert.alert('Registrazione fermata', 'Audio salvato localmente.');
+      return;
+    }
+
+    setIsRecording(true);
+    setIsTranscribing(false);
+
+    try {
+      await startRecording(
+        (result: { text: string; isFinal: boolean }) => {
+          if (result.isFinal && result.text.trim() !== '') {
+            setDraft((prev) => prev + (prev ? ' ' : '') + result.text);
+          }
+        },
+        (error: { code: string; message: string }) => {
+          Alert.alert('Errore riconoscimento', error.message);
+          setIsRecording(false);
+          setIsTranscribing(false);
+        }
+      );
+    } catch (err) {
+      Alert.alert('Errore avvio', (err as Error).message);
+      setIsRecording(false);
+      setIsTranscribing(false);
+    }
+  }
+
+  async function handleCancelRecording() {
+    isTranscribing && (setIsTranscribing(false));
+    await cancelRecording();
+    setIsRecording(false);
+  }
 
   function handleAdd() {
     const text = draft.trim();
@@ -138,22 +219,41 @@ export function DiaryScreen() {
           </Text>
         </View>
 
-        {diaryEntries.length > 0 && (
-          <View style={styles.entries}>
-            <Text style={styles.sectionLabel}>ULTIMI PENSIERI</Text>
-            {diaryEntries.map((entry) => (
-              <View key={entry.id} style={styles.entry}>
-                <Text style={styles.entryText}>{entry.content}</Text>
-                <Text style={styles.entryMeta}>
-                  {new Date(entry.createdAt).toLocaleTimeString('it-IT', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
+        {isTranscribing ? (
+        <View style={styles.recordingInProgress}>
+          <Text style={styles.recordingText}>🎤 Ascolto...</Text>
+        </View>
+      ) : (
+        <TouchableOpacity
+          style={[
+            styles.voiceBtn,
+            isRecording && styles.voiceBtnRecordingActive,
+          ]}
+          onPress={handleStartRecording}
+          disabled={isRecording}
+        >
+          <Text style={styles.voiceBtnText}>
+            {isRecording ? '🛎 Stop' : '🎤 Voice'}
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      {diaryEntries.length > 0 && (
+        <View style={styles.entries}>
+          <Text style={styles.sectionLabel}>ULTIMI PENSIERI</Text>
+          {diaryEntries.map((entry) => (
+            <View key={entry.id} style={styles.entry}>
+              <Text style={styles.entryText}>{entry.content}</Text>
+              <Text style={styles.entryMeta}>
+                {new Date(entry.createdAt).toLocaleTimeString('it-IT', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
       </ScrollView>
 
       <View style={styles.inputRow}>
