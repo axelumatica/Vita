@@ -11,15 +11,104 @@ import { useNavigation, CompositeNavigationProp } from '@react-navigation/native
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useVitaStore } from '../store/vita-store';
+import { useTheme } from '../design/ThemeProvider';
 import type { RootStackParamList } from '../navigation/NavigationRoot';
 
-type HomeNavProp = CompositeNavigationProp<
-  BottomTabNavigationProp<Record<string, undefined>>,
-  NativeStackNavigationProp<RootStackParamList>
->;
+/** Wrap StyleSheet.create so styles re-read colors when theme changes. */
+function useThemedStyles() {
+  const { colors, radius } = useTheme();
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
+    content: { padding: 16, paddingBottom: 100 },
+    heroCard: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.lg,
+      padding: 20,
+      marginBottom: 16,
+    },
+    heroEyebrow: {
+      color: colors.textFaint,
+      fontSize: 11,
+      fontFamily: 'monospace',
+      letterSpacing: 0.8,
+      marginBottom: 8,
+    },
+    heroText: { color: colors.text, fontSize: 16, lineHeight: 24 },
+    quickActions: {
+      flexDirection: 'row',
+      gap: 10,
+      marginBottom: 16,
+    },
+    quickBtn: {
+      flex: 1,
+      backgroundColor: colors.surface2,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      paddingVertical: 14,
+      alignItems: 'center',
+    },
+    quickBtnText: { color: colors.textDim, fontSize: 13, fontWeight: '600' },
+    statusCard: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      padding: 16,
+      marginBottom: 16,
+    },
+    statusRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    statusDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.textFaint,
+      marginRight: 8,
+    },
+    statusDotOn: {
+      backgroundColor: colors.success,
+    },
+    statusText: { color: colors.textDim, fontSize: 13 },
+    settingsLink: {
+      alignSelf: 'flex-start',
+    },
+    settingsLinkText: {
+      color: colors.accent,
+      fontSize: 13,
+      fontWeight: '600',
+    },
+    recentCard: { marginTop: 8 },
+    sectionLabel: {
+      color: colors.textFaint,
+      fontSize: 10,
+      fontFamily: 'monospace',
+      letterSpacing: 0.8,
+      marginBottom: 10,
+    },
+    recentItem: {
+      backgroundColor: colors.surface2,
+      borderRadius: 10,
+      padding: 12,
+      marginBottom: 6,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    recentText: { color: colors.textDim, fontSize: 13 },
+  });
+}
 
 export function HomeScreen() {
-  const nav = useNavigation<HomeNavProp>();
+  const s = useThemedStyles();
+  const nav = useNavigation<CompositeNavigationProp<
+    BottomTabNavigationProp<Record<string, undefined>>,
+    NativeStackNavigationProp<RootStackParamList>
+  >>();
   const vaultEntries = useVitaStore((s) => s.vaultEntries);
   const focusTaskId = useVitaStore((s) => s.focusTaskId);
   const apiKey = useVitaStore((s) => s.openRouterApiKey);
@@ -28,11 +117,11 @@ export function HomeScreen() {
   const recent = vaultEntries.filter((e) => !e.isArchived).slice(0, 3);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={s.container} contentContainerStyle={s.content}>
       {/* Hero card */}
-      <View style={styles.heroCard}>
-        <Text style={styles.heroEyebrow}>🎯 FOCUS UNICO</Text>
-        <Text style={styles.heroText}>
+      <View style={s.heroCard}>
+        <Text style={s.heroEyebrow}>🎯 FOCUS UNICO</Text>
+        <Text style={s.heroText}>
           {focusTask
             ? `Focus: "${focusTask.title}"`
             : 'Nessun task in focus.\nParla con Lior per iniziare.'}
@@ -40,50 +129,50 @@ export function HomeScreen() {
       </View>
 
       {/* Quick actions */}
-      <View style={styles.quickActions}>
+      <View style={s.quickActions}>
         <TouchableOpacity
-          style={styles.quickBtn}
+          style={s.quickBtn}
           onPress={() => nav.navigate('LiorTab')}
         >
-          <Text style={styles.quickBtnText}>🎙 Voce</Text>
+          <Text style={s.quickBtnText}>🎙 Voce</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.quickBtn}
+          style={s.quickBtn}
           onPress={() => nav.navigate('TasksTab')}
         >
-          <Text style={styles.quickBtnText}>⚡ Task</Text>
+          <Text style={s.quickBtnText}>⚡ Task</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.quickBtn}
+          style={s.quickBtn}
           onPress={() => nav.navigate('DiaryTab')}
         >
-          <Text style={styles.quickBtnText}>📖 Diario</Text>
+          <Text style={s.quickBtnText}>📖 Diario</Text>
         </TouchableOpacity>
       </View>
 
       {/* System status */}
-      <View style={styles.statusCard}>
-        <View style={styles.statusRow}>
-          <View style={[styles.statusDot, apiKey ? styles.statusDotOn : undefined]} />
-          <Text style={styles.statusText}>
+      <View style={s.statusCard}>
+        <View style={s.statusRow}>
+          <View style={[s.statusDot, apiKey ? s.statusDotOn : undefined]} />
+          <Text style={s.statusText}>
             {apiKey ? 'Cloud Engine configurato' : 'Cloud Engine non configurato'}
           </Text>
         </View>
         <TouchableOpacity
-          style={styles.settingsLink}
+          style={s.settingsLink}
           onPress={() => nav.navigate('Settings')}
         >
-          <Text style={styles.settingsLinkText}>Apri Impostazioni ↑</Text>
+          <Text style={s.settingsLinkText}>Apri Impostazioni ↑</Text>
         </TouchableOpacity>
       </View>
 
       {/* Recent entries */}
       {vaultEntries.filter((e) => !e.isArchived).length > 0 && (
-        <View style={styles.recentCard}>
-          <Text style={styles.sectionLabel}>RECENTI</Text>
+        <View style={s.recentCard}>
+          <Text style={s.sectionLabel}>RECENTI</Text>
           {recent.map((entry) => (
-            <View key={entry.id} style={styles.recentItem}>
-              <Text style={styles.recentText} numberOfLines={2}>
+            <View key={entry.id} style={s.recentItem}>
+              <Text style={s.recentText} numberOfLines={2}>
                 {entry.content || entry.title}
               </Text>
             </View>
@@ -93,110 +182,3 @@ export function HomeScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0B132B',
-  },
-  content: {
-    padding: 16,
-    paddingBottom: 100,
-  },
-  heroCard: {
-    backgroundColor: '#1C2541',
-    borderWidth: 1,
-    borderColor: '#2A385B',
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 16,
-  },
-  heroEyebrow: {
-    color: '#7c8299',
-    fontSize: 11,
-    fontFamily: 'monospace',
-    letterSpacing: 0.8,
-    marginBottom: 8,
-  },
-  heroText: {
-    color: '#F7F4EA',
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  quickActions: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 16,
-  },
-  quickBtn: {
-    flex: 1,
-    backgroundColor: '#1C2541',
-    borderWidth: 1,
-    borderColor: '#2A385B',
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  quickBtnText: {
-    color: '#C5BFB0',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  statusCard: {
-    backgroundColor: '#1C2541',
-    borderWidth: 1,
-    borderColor: '#2A385B',
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 16,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#7c8299',
-    marginRight: 8,
-  },
-  statusDotOn: {
-    backgroundColor: '#4ade80',
-  },
-  statusText: {
-    color: '#C5BFB0',
-    fontSize: 13,
-  },
-  settingsLink: {
-    alignSelf: 'flex-start',
-  },
-  settingsLinkText: {
-    color: '#F7F4EA',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  recentCard: {
-    marginTop: 8,
-  },
-  sectionLabel: {
-    color: '#7c8299',
-    fontSize: 10,
-    fontFamily: 'monospace',
-    letterSpacing: 0.8,
-    marginBottom: 10,
-  },
-  recentItem: {
-    backgroundColor: '#161d38',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 6,
-    borderWidth: 1,
-    borderColor: '#2A385B',
-  },
-  recentText: {
-    color: '#C5BFB0',
-    fontSize: 13,
-  },
-});

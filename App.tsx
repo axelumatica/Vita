@@ -12,12 +12,22 @@
 import React from 'react';
 import { SafeAreaView, StatusBar } from 'react-native';
 import { NavigationRoot } from './src/navigation/NavigationRoot';
+import { ThemeProvider, useTheme } from './src/design/ThemeProvider';
+
+function AppShell() {
+  const { colors } = useTheme();
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
+      <NavigationRoot />
+    </SafeAreaView>
+  );
+}
 
 export default function App() {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0B132B' }}>
-      <StatusBar barStyle="light-content" backgroundColor="#0B132B" />
-      <NavigationRoot />
-    </SafeAreaView>
+    <ThemeProvider>
+      <AppShell />
+    </ThemeProvider>
   );
 }

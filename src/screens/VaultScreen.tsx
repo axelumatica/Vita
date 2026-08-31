@@ -2,9 +2,7 @@
  * src/screens/VaultScreen.tsx
  *
  * Vault — long-term archive of all stored entries.
- * Placeholder build: lists scratchpad entries as a flat feed.
- * Real version will filter by type (TASK/DIARY/VOICE/NOTE) and use vector
- * search once a proper vaultEntries[] is restored in the store.
+ * Reads from vaultEntries[], filters by type, searches by content/title.
  */
 
 import React, { useState } from 'react';
@@ -17,73 +15,188 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useVitaStore } from '../store/vita-store';
+import { useTheme } from '../design/ThemeProvider';
+import type { VaultEntryType } from '../store/vita-store';
 
-type Filter = 'all' | 'task' | 'diary';
+type Filter = 'all' | VaultEntryType;
+
+const FILTER_LABELS: Record<Filter, string> = {
+  all: 'Tutto',
+  TASK: '⚡ Task',
+  DIARY: '📖 Diario',
+  VOICE: '🎙 Voce',
+  NOTE: '💡 Note',
+};
+
+/** Wrap StyleSheet.create so styles re-read colors when theme changes. */
+function useThemedStyles() {
+  const { colors, radius } = useTheme();
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
+    searchRow: { paddingHorizontal: 16, paddingTop: 12 },
+    search: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      color: colors.text,
+      fontSize: 14,
+    },
+    pillRow: {
+      flexDirection: 'row',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      gap: 8,
+      flexWrap: 'wrap',
+    },
+    pill: {
+      paddingHorizontal: 14,
+      paddingVertical: 7,
+      borderRadius: 999,
+      backgroundColor: colors.surface2,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    pillOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+    pillText: { color: colors.textDim, fontSize: 12, fontWeight: '600' },
+    pillTextOn: { color: colors.accentInk },
+    content: { paddingHorizontal: 16, paddingBottom: 100 },
+    empty: { paddingVertical: 60, alignItems: 'center' },
+    emptyText: { color: colors.textFaint, fontSize: 13, textAlign: 'center', lineHeight: 20 },
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      padding: 14,
+      marginBottom: 10,
+    },
+    cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+    cardType: { fontSize: 16 },
+    lowConfBadge: {
+      marginLeft: 6,
+      backgroundColor: colors.amber,
+      color: colors.accentInk,
+      fontSize: 10,
+      fontWeight: '700',
+      width: 16,
+      height: 16,
+      borderRadius: 8,
+      textAlign: 'center',
+      lineHeight: 16,
+      overflow: 'hidden',
+    },
+    cardTitle: { color: colors.text, fontSize: 15, fontWeight: '600', marginBottom: 4 },
+    cardContent: { color: colors.textDim, fontSize: 13, lineHeight: 19, marginBottom: 8 },
+    tagRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 8 },
+    tag: {
+      backgroundColor: colors.surface2,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 999,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+    },
+    tagText: { color: colors.textFaint, fontSize: 11, fontFamily: 'monospace' },
+    cardMeta: { color: colors.textFaint, fontSize: 11, fontFamily: 'monospace' },
+  });
+}
 
 export function VaultScreen() {
-  const scratchpad = useVitaStore((s) => s.scratchpad);
+  const s = useThemedStyles();
+  const vaultEntries = useVitaStore((s) => s.vaultEntries);
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
 
-  // Placeholder filter logic: real version will read typed vault entries.
-  const filtered = scratchpad
-    .slice()
-    .reverse()
-    .filter((entry) => {
-      if (query && !entry.text.toLowerCase().includes(query.toLowerCase())) {
-        return false;
-      }
-      // Treat as diary by default until proper typing exists.
-      if (filter === 'task') return false;
-      if (filter === 'diary') return true;
-      return true;
+  const visible = vaultEntries
+    .filter((e) => !e.isArchived)
+    .filter((e) => (filter === 'all' ? true : e.type === filter))
+    .filter((e) => {
+      if (!query) return true;
+      const q = query.toLowerCase();
+      return (
+        e.title.toLowerCase().includes(q) ||
+        e.content.toLowerCase().includes(q) ||
+        e.tags.some((t) => t.toLowerCase().includes(q))
+      );
     });
 
+  const counts: Partial<Record<VaultEntryType, number>> = {};
+  for (const e of vaultEntries.filter((e) => !e.isArchived)) {
+    counts[e.type] = (counts[e.type] ?? 0) + 1;
+  }
+
   return (
-    <View style={styles.container}>
-      <View style={styles.searchRow}>
+    <View style={s.container}>
+      <View style={s.searchRow}>
         <TextInput
-          style={styles.search}
+          style={s.search}
           value={query}
           onChangeText={setQuery}
-          placeholder="🔍 Cerca…"
+          placeholder="🔍 Cerca per concetto o significato…"
           placeholderTextColor="#7c8299"
         />
       </View>
 
-      <View style={styles.pillRow}>
-        {(['all', 'task', 'diary'] as Filter[]).map((f) => (
-          <TouchableOpacity
-            key={f}
-            style={[styles.pill, filter === f && styles.pillOn]}
-            onPress={() => setFilter(f)}
-          >
-            <Text style={[styles.pillText, filter === f && styles.pillTextOn]}>
-              {f === 'all' ? 'Tutto' : f === 'task' ? '⚡ Task' : '📖 Diario'}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      <View style={s.pillRow}>
+        {(['all', 'TASK', 'DIARY', 'NOTE'] as Filter[]).map((f) => {
+          const count = f === 'all'
+            ? vaultEntries.filter((e) => !e.isArchived).length
+            : counts[f as VaultEntryType] ?? 0;
+          return (
+            <TouchableOpacity
+              key={f}
+              style={[s.pill, filter === f && s.pillOn]}
+              onPress={() => setFilter(f)}
+            >
+              <Text style={[s.pillText, filter === f && s.pillTextOn]}>
+                {FILTER_LABELS[f]} {count > 0 ? `(${count})` : ''}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        {filtered.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>
-              {scratchpad.length === 0
-                ? 'Il vault è vuoto.\nParla con Lior o scrivi nel Diario per iniziare.'
+      <ScrollView contentContainerStyle={s.content}>
+        {visible.length === 0 ? (
+          <View style={s.empty}>
+            <Text style={s.emptyText}>
+              {vaultEntries.filter((e) => !e.isArchived).length === 0
+                ? 'Il vault è vuoto.\nTocca "Conferma" in Lior per salvare il primo pensiero.'
                 : 'Nessun risultato per la tua ricerca.'}
             </Text>
           </View>
         ) : (
-          filtered.map((entry) => (
-            <View key={entry.id} style={styles.card}>
-              <Text style={styles.cardText}>{entry.text}</Text>
-              <Text style={styles.cardMeta}>
-                {new Date(entry.timestamp).toLocaleString('it-IT', {
+          visible.map((entry) => (
+            <View key={entry.id} style={s.card}>
+              <View style={s.cardHeader}>
+                <Text style={s.cardType}>
+                  {entry.type === 'TASK' ? '⚡' : entry.type === 'DIARY' ? '📖' : '💡'}
+                </Text>
+                {entry.isLowConfidence && (
+                  <Text style={s.lowConfBadge}>?</Text>
+                )}
+              </View>
+              <Text style={s.cardTitle}>{entry.title}</Text>
+              <Text style={s.cardContent} numberOfLines={3}>
+                {entry.content}
+              </Text>
+              {entry.tags.length > 0 && (
+                <View style={s.tagRow}>
+                  {entry.tags.map((tag) => (
+                    <View key={tag} style={s.tag}>
+                      <Text style={s.tagText}>{tag}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+              <Text style={s.cardMeta}>
+                {new Date(entry.createdAt).toLocaleDateString('it-IT', {
                   day: '2-digit',
                   month: 'short',
-                  hour: '2-digit',
-                  minute: '2-digit',
+                  year: 'numeric',
                 })}
               </Text>
             </View>
@@ -93,83 +206,3 @@ export function VaultScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0B132B',
-  },
-  searchRow: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-  },
-  search: {
-    backgroundColor: '#1C2541',
-    borderWidth: 1,
-    borderColor: '#2A385B',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    color: '#F7F4EA',
-    fontSize: 14,
-  },
-  pillRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  pill: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 999,
-    backgroundColor: '#1C2541',
-    borderWidth: 1,
-    borderColor: '#2A385B',
-  },
-  pillOn: {
-    backgroundColor: '#F7F4EA',
-    borderColor: '#F7F4EA',
-  },
-  pillText: {
-    color: '#C5BFB0',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  pillTextOn: {
-    color: '#0B132B',
-  },
-  content: {
-    paddingHorizontal: 16,
-    paddingBottom: 100,
-  },
-  empty: {
-    paddingVertical: 60,
-    alignItems: 'center',
-  },
-  emptyText: {
-    color: '#7c8299',
-    fontSize: 13,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  card: {
-    backgroundColor: '#1C2541',
-    borderWidth: 1,
-    borderColor: '#2A385B',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 8,
-  },
-  cardText: {
-    color: '#F7F4EA',
-    fontSize: 14,
-    lineHeight: 21,
-    marginBottom: 6,
-  },
-  cardMeta: {
-    color: '#7c8299',
-    fontSize: 11,
-    fontFamily: 'monospace',
-  },
-});
