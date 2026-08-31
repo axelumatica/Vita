@@ -45,6 +45,7 @@ import {
   extractTasks,
   breakdownTask,
   chat,
+  streamChat,
   liorHelpMeThink,
   liorRereadDump,
   LiorError,
@@ -134,20 +135,27 @@ export function LiorScreen() {
     setInput('');
     pushMessage('user', text);
 
-    // Add a placeholder that we'll replace when we get a response.
+    // Add a placeholder that we'll update as the stream comes in.
     const placeholderId = `msg_${Date.now()}`;
     setMessages((prev) => [
       ...prev,
-      { id: placeholderId, role: 'lior', text: '…', timestamp: Date.now() },
+      { id: placeholderId, role: 'lior', text: '', timestamp: Date.now() },
     ]);
     setIsLoading(true);
 
     try {
-      const reply = await chat([{ role: 'user', content: text }], apiKey);
-      setMessages((prev) =>
-        prev.map((m) => (m.id === placeholderId ? { ...m, text: reply } : m)),
-      );
-      speakReply(reply);
+      let fullReply = '';
+      // Use streaming chat for incremental response.
+      for await (const chunk of streamChat([{ role: 'user', content: text }], apiKey)) {
+        if (!chunk) break; // End sentinel
+        fullReply += chunk;
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === placeholderId ? { ...m, text: fullReply } : m,
+          ),
+        );
+      }
+      speakReply(fullReply);
     } catch (err) {
       const msg = err instanceof LiorError ? err.message : 'Errore sconosciuto.';
       setMessages((prev) =>

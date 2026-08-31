@@ -35,7 +35,6 @@
 import {
   LIOR_MODELS,
   defaultModelFor,
-  LIOR_PERSONA,
   PROCESSING_DISCLOSURE,
   TASK_CONFIDENCE_GATE,
   MAX_MICRO_STEPS,
@@ -43,6 +42,10 @@ import {
   BREAKDOWN_INPUT_CHAR_BUDGET,
   LiorTask,
 } from './lior-models';
+
+// Hot-reload persona loader: reads personaMode + voiceGender from Zustand
+// store at every call. Replaces the static LIOR_PERSONA import.
+import { getActivePersonaOrDefault } from './persona-loader';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Types
@@ -418,7 +421,7 @@ export async function chat(
 
   // Build the OpenRouter message array. Inject the persona as a system message.
   const orMessages: OrChatMessage[] = [
-    { role: 'system', content: `${PROCESSING_DISCLOSURE}\n\n${LIOR_PERSONA}` },
+    { role: 'system', content: `${PROCESSING_DISCLOSURE}\n\n${getActivePersonaOrDefault()}` },
     ...messages.map((m): OrChatMessage => ({
       role: m.role,
       content: m.content,
@@ -432,6 +435,118 @@ export async function chat(
     model.temperature,
     model.maxTokens,
   );
+}
+
+/**
+ * Streaming chat with the Lior persona.
+ *
+ * Same as `chat()` but yields text chunks incrementally so callers can
+ * show a typing/streaming indicator while Lior's response arrives.
+ * Callers should read the generator until completion; the accumulated
+ * text is the full response.
+ *
+ * Use this for:
+ *   - Live conversation in LiorScreen where you want to show the model
+ *     typing incrementally rather than waiting for the full response.
+ *   - "Help me think" with incremental grounding questions.
+ *
+ * @param messages     Array of chat turns, newest last. Does NOT include the
+ *                    system prompt — that is injected here.
+ * @param apiKey       OpenRouter API key.
+ * @param modelId      Override the default chat model (Gemini 2.0 Flash).
+ *                     Pass null/undefined to use the catalog default.
+ */
+export async function* streamChat(
+  messages: ChatMessage[],
+  apiKey: string,
+  modelId?: string,
+): AsyncGenerator<string, string, unknown> {
+  const model = modelId
+    ? LIOR_MODELS.find((m) => m.id === modelId) ?? defaultModelFor('chat')
+    : defaultModelFor('chat');
+
+  // Build the OpenRouter message array. Inject the persona as a system message.
+  const orMessages: OrChatMessage[] = [
+    { role: 'system', content: `${PROCESSING_DISCLOSURE}\n\n${getActivePersonaOrDefault()}` },
+    ...messages.map((m): OrChatMessage => ({
+      role: m.role,
+      content: m.content,
+    })),
+  ];
+
+  const res = await fetch(`${OR_BASE}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+      'HTTP-Referer': 'vita-app',
+      'X-Title': 'Vita — ADHD Companion',
+      // Tell OpenRouter we want streaming NDJSON chunks.
+      Accept: 'text/event-stream',
+    },
+    body: JSON.stringify({
+      model: model.id,
+      messages: orMessages,
+      temperature: model.temperature,
+      max_tokens: model.maxTokens,
+      stream: true,
+    }),
+  });
+
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}));
+    throw new LiorError(
+      'HTTP_ERROR',
+      `OpenRouter request failed: ${res.status} ${res.statusText}\n${json.error?.message || ''}`,
+    );
+  }
+
+  // Parse the SSE / NDJSON stream that OpenRouter returns.
+  const reader = res.body?.getReader();
+  if (!reader) {
+    throw new LiorError('EMPTY_RESPONSE', 'OpenRouter returned no readable body.');
+  }
+
+  const decoder = new TextDecoder();
+  let fullContent = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    const chunk = decoder.decode(value, { stream: true });
+    // OpenRouter streams each line as "data: {json}\n\n".
+    // Split on newlines and process each JSON line.
+    const lines = chunk.split('\n');
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const jsonStr = line.slice(6); // remove "data: " prefix
+      if (jsonStr === '[DONE]') continue;
+      try {
+        const json = JSON.parse(jsonStr) as {
+          choices?: Array<{
+            delta?: { content?: string };
+            finish_reason?: string;
+          }>;
+        };
+        const delta = json.choices?.[0]?.delta?.content;
+        if (delta) {
+          fullContent += delta;
+          yield delta;
+        }
+        if (json.choices?.[0]?.finish_reason) {
+          // Signal end of stream by yielding the empty string as sentinel.
+          break;
+        }
+      } catch {
+        // Skip malformed lines.
+      }
+    }
+  }
+
+  // Yield accumulated full content as the final value.
+  yield fullContent;
+  return fullContent;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -455,7 +570,7 @@ export async function liorHelpMeThink(
 
   const prompt = `${PROCESSING_DISCLOSURE}
 
-${LIOR_PERSONA}
+${getActivePersonaOrDefault()}
 
 The user said:
 "${userText.slice(0, 800)}"
@@ -491,7 +606,7 @@ export async function liorRereadDump(
 
   const prompt = `${PROCESSING_DISCLOSURE}
 
-${LIOR_PERSONA}
+${getActivePersonaOrDefault()}
 
 The user recently said (or dumped):
 "${userText.slice(0, 800)}"

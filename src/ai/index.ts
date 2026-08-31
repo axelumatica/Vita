@@ -26,11 +26,34 @@ export type {
   LiorModel,
 } from './lior-models';
 
+// Persona loader (hot-reload)
+export {
+  getActivePersona,
+  getActivePersonaOrDefault,
+} from './persona-loader';
+
+// Voice profiles
+export {
+  VOICE_PROFILES,
+  getVoiceProfile,
+  getVoiceProfileById,
+  DEFAULT_VOICE_PROFILE,
+  DEFAULT_VOICE_PROFILE_ID,
+} from './voice-profiles';
+
+export type {
+  VoiceProfile,
+  VoiceProfileId,
+  Gender,
+  Mood,
+} from './voice-profiles';
+
 // Pipeline
 export {
   extractTasks,
   breakdownTask,
   chat,
+  streamChat,
   liorHelpMeThink,
   liorRereadDump,
   LiorError,
