@@ -20,10 +20,12 @@ type HomeNavProp = CompositeNavigationProp<
 
 export function HomeScreen() {
   const nav = useNavigation<HomeNavProp>();
-  const scratchpad = useVitaStore((s) => s.scratchpad);
+  const vaultEntries = useVitaStore((s) => s.vaultEntries);
+  const focusTaskId = useVitaStore((s) => s.focusTaskId);
   const apiKey = useVitaStore((s) => s.openRouterApiKey);
 
-  const lastEntry = scratchpad[scratchpad.length - 1];
+  const focusTask = vaultEntries.find((e) => e.id === focusTaskId);
+  const recent = vaultEntries.filter((e) => !e.isArchived).slice(0, 3);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -31,9 +33,9 @@ export function HomeScreen() {
       <View style={styles.heroCard}>
         <Text style={styles.heroEyebrow}>🎯 FOCUS UNICO</Text>
         <Text style={styles.heroText}>
-          {lastEntry
-            ? `Ultimo pensiero catturato:\n"${lastEntry.text.slice(0, 60)}${lastEntry.text.length > 60 ? '…' : ''}"`
-            : 'Nessun pensiero catturato oggi.\nParla con Lior per iniziare.'}
+          {focusTask
+            ? `Focus: "${focusTask.title}"`
+            : 'Nessun task in focus.\nParla con Lior per iniziare.'}
         </Text>
       </View>
 
@@ -75,14 +77,14 @@ export function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Recent scratchpad */}
-      {scratchpad.length > 0 && (
+      {/* Recent entries */}
+      {vaultEntries.filter((e) => !e.isArchived).length > 0 && (
         <View style={styles.recentCard}>
           <Text style={styles.sectionLabel}>RECENTI</Text>
-          {scratchpad.slice(-3).reverse().map((entry) => (
+          {recent.map((entry) => (
             <View key={entry.id} style={styles.recentItem}>
               <Text style={styles.recentText} numberOfLines={2}>
-                {entry.text}
+                {entry.content || entry.title}
               </Text>
             </View>
           ))}
