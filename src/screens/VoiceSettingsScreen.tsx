@@ -33,7 +33,7 @@ import {
   PROCESSING_DISCLOSURE,
 } from '../ai/lior-models';
 import { speak, isSpeaking, stop } from '../services/tts';
-import { getVoiceProfileById } from '../ai/voice-profiles';
+import { VOICE_PROFILES, getVoiceProfileById } from '../ai/voice-profiles';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Component
@@ -272,7 +272,39 @@ export function VoiceSettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Voce e Personalità</Text>
 
-          {/* Gender toggle */}
+          {/* Voice profile picker grid: 6 profiles (gender × mood) */}
+          <View style={styles.voiceProfileSection}>
+            <Text style={styles.voiceProfileSectionLabel}>
+              Profilo vocale
+            </Text>
+            <View style={styles.voiceProfileGrid}>
+              {VOICE_PROFILES.map((profile) => {
+                const isActive = profile.id === voiceProfileId;
+                return (
+                  <TouchableOpacity
+                    key={profile.id}
+                    style={[
+                      styles.voiceProfileOption,
+                      isActive && styles.voiceProfileOptionSelected,
+                    ]}
+                    onPress={() => setVoiceProfileId(profile.id)}
+                  >
+                    <Text style={[
+                      styles.voiceProfileCardLabel,
+                      isActive && styles.voiceProfileCardLabelSelected,
+                    ]}>
+                      {profile.label}
+                    </Text>
+                    <Text style={styles.voiceProfileName}>
+                      {profile.voiceName}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Gender & Mood as secondary derived controls */}
           <View style={styles.genderRow}>
             <TouchableOpacity
               style={[
@@ -308,7 +340,6 @@ export function VoiceSettingsScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Mood selector */}
           <View style={styles.moodRow}>
             {(['friendly', 'seductive', 'mean'] as const).map((moodOption) => (
               <TouchableOpacity
@@ -714,6 +745,50 @@ const styles = StyleSheet.create({
   toggleLabel: {
     color: '#C5BFB0',
     fontSize: 14,
+    fontWeight: '600',
+  },
+  // ── Voice profile picker ──────────────────────────────────────────────
+  voiceProfileSection: {
+    marginBottom: 16,
+  },
+  voiceProfileSectionLabel: {
+    color: '#7c8299',
+    fontSize: 11,
+    fontFamily: 'monospace',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 8,
+  },
+  voiceProfileGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  voiceProfileOption: {
+    width: '48%',
+    backgroundColor: '#1C2541',
+    borderColor: '#2A385B',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+  voiceProfileOptionSelected: {
+    borderColor: '#F7F4EA',
+    backgroundColor: '#161d38',
+  },
+  voiceProfileCardLabelSelected: {
+    color: '#F7F4EA',
+  },
+  voiceProfileName: {
+    color: '#7c8299',
+    fontSize: 10,
+    fontFamily: 'monospace',
+    marginTop: 2,
+  },
+  voiceProfileCardLabel: {
+    color: '#C5BFB0',
+    fontSize: 13,
     fontWeight: '600',
   },
   toggleHint: {
