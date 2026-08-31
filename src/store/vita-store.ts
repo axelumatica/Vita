@@ -21,6 +21,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { VoiceProfileId } from '../ai/voice-profiles';
+import { getVoiceProfile } from '../ai/voice-profiles';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  ID helper
@@ -106,6 +108,16 @@ export interface LiorPersona {
   useDefault: boolean;
 }
 
+/** Mood/persona mode that controls both the AI behavior and the TTS voice.
+ *  Maps 1:1 to the voice profile gender×mood combinations.
+ *  pipeline.ts reads this at call time to load the correct persona file
+ *  (hot-reload, no caching).
+ */
+export type PersonaMode = 'friendly' | 'seductive' | 'mean';
+
+/** Gender selects the Edge TTS neural voice (Isabella or Diego). */
+export type VoiceGender = 'female' | 'male';
+
 // ─────────────────────────────────────────────────────────────────────────────
 //  Store shape
 // ─────────────────────────────────────────────────────────────────────────────
@@ -155,8 +167,33 @@ export interface VitaStore {
   lowStimulus: boolean;
   setLowStimulus: (on: boolean) => void;
 
+  wasOnboarded: boolean;
+  setWasOnboarded: (on: boolean) => void;
+
   persona: LiorPersona;
   setPersona: (persona: Partial<LiorPersona>) => void;
+
+  // ── Persona mode (AI behavior + TTS voice) ─────────────────────────
+  /** Active mood/persona mode. Read by pipeline.ts at call time. */
+  personaMode: PersonaMode;
+  setPersonaMode: (mode: PersonaMode) => void;
+
+  /** Active gender for TTS voice selection. */
+  voiceGender: VoiceGender;
+  setVoiceGender: (gender: VoiceGender) => void;
+
+  /** Active voice profile id. Derived from voiceGender + personaMode, but
+   *  settable directly for custom profiles (secret unlock). */
+  voiceProfileId: VoiceProfileId;
+  setVoiceProfileId: (id: VoiceProfileId) => void;
+
+  /** Custom persona prompt for the secret unlock feature (future). */
+  customPersonaPrompt: string;
+  setCustomPersonaPrompt: (prompt: string) => void;
+
+  /** Secret unlock flag for custom personas (future). */
+  customPersonaUnlocked: boolean;
+  unlockCustomPersona: () => void;
 
   isListening: boolean;
   setIsListening: (listening: boolean) => void;
@@ -205,6 +242,10 @@ const DEFAULT_PERSONA: LiorPersona = {
   displayName: 'Lior',
   useDefault: true,
 };
+
+const DEFAULT_PERSONA_MODE: PersonaMode = 'friendly';
+const DEFAULT_VOICE_GENDER: VoiceGender = 'female';
+const DEFAULT_VOICE_PROFILE_ID: VoiceProfileId = 'female-friendly';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Store
@@ -346,9 +387,35 @@ export const useVitaStore = create<VitaStore>()(
       lowStimulus: false,
       setLowStimulus: (on) => set({ lowStimulus: on }),
 
+      wasOnboarded: false,
+      setWasOnboarded: (on) => set({ wasOnboarded: on }),
+
       persona: DEFAULT_PERSONA,
       setPersona: (patch) =>
         set((state) => ({ persona: { ...state.persona, ...patch } })),
+
+      personaMode: DEFAULT_PERSONA_MODE,
+      setPersonaMode: (mode) =>
+        set((state) => {
+          const profile = getVoiceProfile(state.voiceGender, mode);
+          return { personaMode: mode, voiceProfileId: profile.id };
+        }),
+
+      voiceGender: DEFAULT_VOICE_GENDER,
+      setVoiceGender: (gender) =>
+        set((state) => {
+          const profile = getVoiceProfile(gender, state.personaMode);
+          return { voiceGender: gender, voiceProfileId: profile.id };
+        }),
+
+      voiceProfileId: DEFAULT_VOICE_PROFILE_ID,
+      setVoiceProfileId: (id) => set({ voiceProfileId: id }),
+
+      customPersonaPrompt: '',
+      setCustomPersonaPrompt: (prompt) => set({ customPersonaPrompt: prompt }),
+
+      customPersonaUnlocked: false,
+      unlockCustomPersona: () => set({ customPersonaUnlocked: true }),
 
       isListening: false,
       setIsListening: (listening) => set({ isListening: listening }),
@@ -360,10 +427,15 @@ export const useVitaStore = create<VitaStore>()(
           taskSteps: [],
           projectClusters: [],
           focusTaskId: null,
-          scratchpad: [], // legacy field cleared for completeness
+          scratchpad: [],
           themeMode: 'dark',
           lowStimulus: false,
           persona: DEFAULT_PERSONA,
+          personaMode: DEFAULT_PERSONA_MODE,
+          voiceGender: DEFAULT_VOICE_GENDER,
+          voiceProfileId: DEFAULT_VOICE_PROFILE_ID,
+          customPersonaPrompt: '',
+          customPersonaUnlocked: false,
         }),
     }),
     {
@@ -376,7 +448,7 @@ export const useVitaStore = create<VitaStore>()(
         return rest;
       },
       // Version the persisted shape so we can migrate later.
-      version: 2,
+      version: 4,
     },
   ),
 );

@@ -38,6 +38,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/NavigationRoot';
+import { useTheme } from '../design/ThemeProvider';
 import { useVitaStore } from '../store/vita-store';
 import type { VaultEntryType } from '../store/vita-store';
 import {
@@ -53,6 +54,16 @@ import {
   LISTENING_PROMPT,
   FIRST_GREETING,
 } from '../ai';
+import { speak } from '../services/tts';
+import {
+  startRecording,
+  stopRecording,
+  cancelRecording,
+  isSpeechListening,
+  getActiveRecording,
+  type VoiceResult,
+  type VoiceError,
+} from '../services/voice-recording';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Types
@@ -82,6 +93,10 @@ export function LiorScreen() {
   const [overloadMode, setOverloadMode] = useState(false);
   const [lastExtraction, setLastExtraction] = useState<ExtractionResult | null>(null);
 
+  // ── Voice recording state ─────────────────────────────────────────
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+
   // ── Helpers ────────────────────────────────────────────────────────────
 
   function requireKey(): boolean {
@@ -103,6 +118,16 @@ export function LiorScreen() {
     ]);
   }
 
+  /** Speak Lior's reply aloud via the active voice profile. */
+  async function speakReply(text: string) {
+    if (!text) return;
+    try {
+      await speak(text);
+    } catch {
+      // Silent — TTS is best-effort, never block the UI on it.
+    }
+  }
+
   async function handleSend() {
     const text = input.trim();
     if (!text || !requireKey()) return;
@@ -122,6 +147,7 @@ export function LiorScreen() {
       setMessages((prev) =>
         prev.map((m) => (m.id === placeholderId ? { ...m, text: reply } : m)),
       );
+      speakReply(reply);
     } catch (err) {
       const msg = err instanceof LiorError ? err.message : 'Errore sconosciuto.';
       setMessages((prev) =>
@@ -152,6 +178,7 @@ export function LiorScreen() {
         const last = prev[prev.length - 1]!;
         return [...prev.slice(0, -1), { ...last, text: reply }];
       });
+      speakReply(reply);
     } catch (err) {
       const msg = err instanceof LiorError ? err.message : 'Errore.';
       setMessages((prev) => {
@@ -177,6 +204,7 @@ export function LiorScreen() {
       const result: ExtractionResult = await extractTasks(lastUser.text, apiKey);
 
       if (result.overloadDetected) {
+        speakReply('Sento che sei sovraccarico. Fermiamoci un momento.');
         setOverloadMode(true);
         pushMessage(
           'lior',
@@ -208,6 +236,7 @@ export function LiorScreen() {
         }
         reply += '\n\n👆 Tocca "Conferma" per salvare nel Vault.';
         pushMessage('lior', reply.trim());
+        speakReply(reply.trim());
       }
     } catch (err) {
       const msg = err instanceof LiorError ? err.message : 'Errore.';
@@ -239,6 +268,7 @@ export function LiorScreen() {
         const last = prev[prev.length - 1]!;
         return [...prev.slice(0, -1), { ...last, text: reply }];
       });
+      speakReply(reply);
     } catch (err) {
       const msg = err instanceof LiorError ? err.message : 'Errore.';
       setMessages((prev) => {
@@ -267,6 +297,52 @@ export function LiorScreen() {
         },
       ],
     );
+  }
+
+  // ── Voice recording handlers ─────────────────────────────────────
+  async function handleStartRecording() {
+    if (isRecording) {
+      // Stop recording and process
+      setIsRecording(false);
+      setIsTranscribing(true);
+
+      const audioUri = await stopRecording();
+
+      // Speech recognition will give us the result via callback
+      // We just wait for the callback to fire
+      return;
+    }
+
+    // Start recording
+    setIsRecording(true);
+    setIsTranscribing(false);
+
+    try {
+      await startRecording(
+        (result: VoiceResult) => {
+          // This is called when we get speech recognition results
+          if (result.isFinal && result.text.trim() !== '') {
+            // Put the recognized text into the input field
+            setInput(result.text);
+
+            // Auto-submit if we have text
+            if (result.text.trim().length > 0) {
+              handleSend();
+            }
+          }
+        },
+        (error: VoiceError) => {
+          // Handle recognition errors
+          Alert.alert('Errore riconoscimento', error.message);
+          setIsRecording(false);
+          setIsTranscribing(false);
+        }
+      );
+    } catch (err) {
+      Alert.alert('Errore avvio registrazione', (err as Error).message);
+      setIsRecording(false);
+      setIsTranscribing(false);
+    }
   }
 
   function handleClear() {
@@ -422,6 +498,25 @@ export function LiorScreen() {
           <Text style={styles.shortcutText}>🛑 Ferma tutto</Text>
         </TouchableOpacity>
       </View>
+      {/* ── Voice recording button ──────────────────────── */}
+      {isTranscribing ? (
+        <View style={styles.recordingInProgress}>
+          <Text style={styles.recordingText}>🎤 Ascolto...</Text>
+        </View>
+      ) : (
+        <TouchableOpacity
+          style={[
+            styles.shortcutBtn,
+            isRecording && styles.shortcutBtnRecordingActive,
+          ]}
+          onPress={handleStartRecording}
+          disabled={isLoading}
+        >
+          <Text style={styles.shortcutText}>
+            {isRecording ? '(stop) Stop' : '🎤 Voice'}
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {/* ── Confirm extracted items ───────────────────────────── */}
       {lastExtraction && lastExtraction.items.length > 0 && (
@@ -602,6 +697,19 @@ const styles = StyleSheet.create({
     color: '#C5BFB0',
     fontSize: 12,
     fontWeight: '600',
+  },
+  shortcutBtnRecordingActive: {
+    borderColor: '#F7F4EA',
+    backgroundColor: '#F7F4EA',
+  },
+  recordingInProgress: {
+    padding: 12,
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  recordingText: {
+    color: '#C5BFB0',
+    fontSize: 12,
   },
   confirmRow: {
     flexDirection: 'row',
