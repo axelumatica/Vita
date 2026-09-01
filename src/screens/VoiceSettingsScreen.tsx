@@ -34,6 +34,12 @@ import {
 } from '../ai/lior-models';
 import { speak, isSpeaking, stop } from '../services/tts';
 import { VOICE_PROFILES, getVoiceProfileById } from '../ai/voice-profiles';
+import {
+  buildBackup,
+  shareBackup,
+  parseBackupJson,
+  importBackup,
+} from '../services/backup';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Component
@@ -68,6 +74,12 @@ export function VoiceSettingsScreen() {
 
   const [showPreview, setShowPreview] = useState(false);
   const [customPrompt, setCustomPrompt] = useState('');
+
+  // ── Backup & Restore state ─────────────────────────────────────
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importJson, setImportJson] = useState('');
+  const [showImport, setShowImport] = useState(false);
 
   async function handlePreview() {
     await stop();
@@ -113,6 +125,72 @@ export function VoiceSettingsScreen() {
         },
       ],
     );
+  }
+
+  // ── Backup handlers ──────────────────────────────────────────────
+
+  async function handleExport() {
+    setIsExporting(true);
+    try {
+      const backup = buildBackup();
+      void backup; // ensure captured before await
+      const result = await shareBackup(backup);
+      const stats = backup.stats;
+      const methodLabel = result.method === 'share' ? 'condiviso' : 'copiato negli appunti';
+      Alert.alert(
+        'Backup creato',
+        `${stats.entries} entry, ${stats.steps} micro-step, ${stats.clusters} cluster.\n\nBackup ${methodLabel} (${formatBytes(result.size)}).`,
+      );
+    } catch (err) {
+      Alert.alert('Errore backup', (err as Error).message);
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
+  function handleImportStart() {
+    if (importJson.trim().length === 0) {
+      Alert.alert('JSON vuoto', 'Incolla il backup JSON qui sotto prima di importare.');
+      return;
+    }
+    const backup: import('../services/backup').VitaBackup = parseBackupJson(importJson);
+    Alert.alert(
+      'Come importare?',
+      `${backup.stats.entries} entry, ${backup.stats.steps} micro-step, ${backup.stats.clusters} cluster.`,
+      [
+        { text: 'Annulla', style: 'cancel' },
+        {
+          text: 'Unisci',
+          onPress: () => doImport(backup, false),
+        },
+        {
+          text: 'Sostituisci tutto',
+          style: 'destructive',
+          onPress: () => doImport(backup, true),
+        },
+      ],
+    );
+  }
+
+  function doImport(backup: ReturnType<typeof parseBackupJson>, replace: boolean) {
+    setIsImporting(true);
+    try {
+      const result = importBackup(backup, { replace });
+      const warnings = result.warnings?.length ? `\n\nNote: ${result.warnings.join(' · ')}` : '';
+      Alert.alert('Fatto', result.message + warnings);
+      setImportJson('');
+      setShowImport(false);
+    } catch (err) {
+      Alert.alert('Errore importazione', (err as Error).message);
+    } finally {
+      setIsImporting(false);
+    }
+  }
+
+  function formatBytes(n: number): string {
+    if (n < 1024) return `${n} B`;
+    if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+    return `${(n / 1024 / 1024).toFixed(2)} MB`;
   }
 
   function renderModelPicker(role: 'chat' | 'extract' | 'breakdown') {
@@ -391,6 +469,59 @@ export function VoiceSettingsScreen() {
         {renderModelPicker('chat')}
         {renderModelPicker('extract')}
         {renderModelPicker('breakdown')}
+
+        {/* ── Backup & Export ───────────────────────────────────── */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Backup & Esporta</Text>
+
+          <TouchableOpacity
+            style={[styles.button, styles.buttonPrimary, isExporting && styles.buttonDisabled]}
+            onPress={handleExport}
+            disabled={isExporting}
+          >
+            <Text style={styles.buttonPrimaryText}>
+              {isExporting ? 'Esportazione…' : '📤 Esporta vault'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#2A385B', marginTop: 12 }]}
+            onPress={() => setShowImport(!showImport)}
+          >
+            <Text style={styles.buttonPrimaryText}>
+              {showImport ? '🔼 Chiudi' : '📥 Importa backup'}
+            </Text>
+          </TouchableOpacity>
+
+          {showImport && (
+            <View style={{ marginTop: 16 }}>
+              <TextInput
+                style={[styles.customPromptInput, { minHeight: 120, fontFamily: 'monospace' }]}
+                value={importJson}
+                onChangeText={setImportJson}
+                placeholder="Incolla qui il backup JSON…"
+                placeholderTextColor="#7c8299"
+                multiline
+                textAlignVertical="top"
+              />
+              <View style={styles.buttonRow}>
+                <TouchableOpacity
+                  style={[styles.button, styles.buttonDanger, isImporting && styles.buttonDisabled]}
+                  onPress={handleImportStart}
+                  disabled={isImporting}
+                >
+                  <Text style={styles.buttonDangerText}>{isImporting ? '…' : 'Importa'}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          <Text style={styles.hint}>
+            Il backup contiene tutto il vault, i micro-step, i cluster e le impostazioni vocali.
+            Puoi salvarlo in un file o condividerlo. L'importazione non sovrascrive mai nulla
+            senza che tu lo decida.
+          </Text>
+        </View>
 
         {/* ── Footer note ─────────────────────────────────────────── */}
         <View style={styles.section}>

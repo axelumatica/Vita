@@ -22,7 +22,7 @@
  * Future: expo-av voice recording, streaming chat via SSE.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -33,8 +33,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
+import { LiorOrb } from '../components/LiorOrb';
+import { Icon } from '../design/Icon';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/NavigationRoot';
@@ -231,7 +232,7 @@ export function LiorScreen() {
         const diaryItems = result.items.filter((i) => i.isDiary);
         let reply = '';
         if (taskItems.length > 0) {
-          reply += `⚡ Task estratti (${taskItems.length}):\n`;
+          reply += `Task estratti (${taskItems.length}):\n`;
           taskItems.forEach((item, i) => {
             reply += `  ${i + 1}. ${item.title}\n`;
           });
@@ -290,7 +291,7 @@ export function LiorScreen() {
 
   function handleFreezeEverything() {
     Alert.alert(
-      '⛑ Ferma tutto',
+      'Ferma tutto',
       'Tutte le notifiche vengono sospese per oggi. Vuoi procedere?',
       [
         { text: 'Annulla', style: 'cancel' },
@@ -405,7 +406,7 @@ export function LiorScreen() {
     const summary = [];
     if (taskCount > 0) summary.push(`${taskCount} task`);
     if (diaryCount > 0) summary.push(`${diaryCount} riflession${diaryCount === 1 ? 'e' : 'i'}`);
-    pushMessage('lior', `✅ Salvato nel Vault: ${summary.join(' + ')}.`);
+    pushMessage('lior', `Salvato nel Vault: ${summary.join(' + ')}.`);
   }
 
   // ── Render ──────────────────────────────────────────────────────────────
@@ -426,18 +427,37 @@ export function LiorScreen() {
             onPress={() => navigation.navigate('Settings')}
             style={styles.settingsBtn}
           >
-            <Text style={styles.settingsBtnText}>⚙</Text>
+            <Icon name="Settings" size={16} color="#C5BFB0" />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* ── Orb + status ───────────────────────────────────────── */}
       <View style={styles.presenceArea}>
-        <View style={styles.orb} />
-        <Text style={styles.statusText}>
-          {isLoading ? 'Elaborazione…' : messages.length === 0 ? FIRST_GREETING : LISTENING_PROMPT}
-        </Text>
-        {isLoading && <ActivityIndicator size="small" color="#F7F4EA" style={{ marginTop: 8 }} />}
+        <LiorOrb
+          state={
+            overloadMode
+              ? 'overload'
+              : isRecording || isTranscribing
+                ? 'listening'
+                : isLoading
+                  ? 'thinking'
+                  : 'idle'
+          }
+          caption={
+            overloadMode
+              ? 'Overload — slowing down'
+              : isRecording
+                ? 'Ascolto…'
+                : isTranscribing
+                  ? 'Trascrizione…'
+                  : isLoading
+                    ? 'Elaborazione…'
+                    : messages.length === 0
+                      ? FIRST_GREETING
+                      : LISTENING_PROMPT
+          }
+        />
       </View>
 
       {/* ── Live Scratchpad ────────────────────────────────────── */}
@@ -480,14 +500,16 @@ export function LiorScreen() {
           onPress={handleHelpMeThink}
           disabled={isLoading}
         >
-          <Text style={styles.shortcutText}>🧠 Aiutami a pensare</Text>
+          <Icon name="Brain" size={16} color="#C5BFB0" />
+          <Text style={[styles.shortcutText, { marginLeft: 4 }]}>Aiutami a pensare</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.shortcutBtn}
           onPress={handleExtract}
           disabled={isLoading}
         >
-          <Text style={styles.shortcutText}>🎯 Estrai 1 task</Text>
+          <Icon name="Target" size={16} color="#C5BFB0" />
+          <Text style={[styles.shortcutText, { marginLeft: 4 }]}>Estrai 1 task</Text>
         </TouchableOpacity>
       </View>
       <View style={styles.shortcuts}>
@@ -496,20 +518,23 @@ export function LiorScreen() {
           onPress={handleRereadDump}
           disabled={isLoading}
         >
-          <Text style={styles.shortcutText}>🔍 Rileggi il dump</Text>
+          <Icon name="Search" size={16} color="#C5BFB0" />
+          <Text style={[styles.shortcutText, { marginLeft: 4 }]}>Rileggi il dump</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.shortcutBtn}
           onPress={handleFreezeEverything}
           disabled={isLoading}
         >
-          <Text style={styles.shortcutText}>🛑 Ferma tutto</Text>
+          <Icon name="OctagonAlert" size={16} color="#C5BFB0" />
+          <Text style={[styles.shortcutText, { marginLeft: 4 }]}>Ferma tutto</Text>
         </TouchableOpacity>
       </View>
       {/* ── Voice recording button ──────────────────────── */}
       {isTranscribing ? (
         <View style={styles.recordingInProgress}>
-          <Text style={styles.recordingText}>🎤 Ascolto...</Text>
+          <Icon name="Mic" size={16} color="#F7F4EA" />
+          <Text style={[styles.recordingText, { marginLeft: 4 }]}>Ascolto...</Text>
         </View>
       ) : (
         <TouchableOpacity
@@ -521,7 +546,8 @@ export function LiorScreen() {
           disabled={isLoading}
         >
           <Text style={styles.shortcutText}>
-            {isRecording ? '(stop) Stop' : '🎤 Voice'}
+            <Icon name="Mic" size={16} color={isRecording ? '#F7F4EA' : '#C5BFB0'} />
+          <Text style={[styles.shortcutText, { marginLeft: 4 }]}>{isRecording ? 'Stop' : 'Voice'}</Text>
           </Text>
         </TouchableOpacity>
       )}
@@ -538,7 +564,10 @@ export function LiorScreen() {
             onPress={handleConfirmAll}
             disabled={isLoading}
           >
-            <Text style={styles.confirmBtnText}>✅ Conferma</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Icon name="Check" size={16} color="#0B132B" />
+                    <Text style={[styles.confirmBtnText, { marginLeft: 4 }]}>Conferma</Text>
+                  </View>
           </TouchableOpacity>
         </View>
       )}
@@ -561,7 +590,7 @@ export function LiorScreen() {
           onPress={handleSend}
           disabled={!input.trim() || isLoading}
         >
-          <Text style={styles.sendBtnText}>↑</Text>
+          <Icon name="ArrowUp" size={20} color="#0B132B" />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -622,16 +651,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
   },
-  orb: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: '#F7F4EA',
-    shadowColor: '#F7F4EA',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 8,
+  orbTapWrap: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   statusText: {
     color: '#C5BFB0',

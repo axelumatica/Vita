@@ -1,9 +1,14 @@
 /**
  * src/screens/OnboardingScreen.tsx
- * Full-screen onboarding flow shown at first launch.
- * Takes over the navigator until the user taps "Inizia".
- * On complete, sets wasOnboarded=true and navigates to MainTabs.
- * Can also be re-shown from Settings (reset wasOnboarded).
+ *
+ * ADHD-tuned onboarding: visual-first, feature-focused, low-cognitive-load.
+ * 4 screens, each showing what the user actually gets:
+ *   1. Quick capture - tap +, say or type
+ *   2. Lior companion - talk to your ADHD coach
+ *   3. Micro-actions - tasks broken to <=2 min steps
+ *   4. Your vault - everything saved locally, always yours
+ *
+ * Principles: no shame, skip anytime, no streaks, visual over text.
  */
 
 import React, { useState, useCallback } from 'react';
@@ -27,70 +32,73 @@ function useThemedStyles() {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     content: { padding: 24, paddingBottom: 100 },
-    introCard: {
+    card: {
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
-      borderRadius: radius.md,
+      borderRadius: radius.lg,
       padding: 24,
-      marginBottom: 24,
+      marginBottom: 32,
     },
-    introTitle: { color: colors.text, fontSize: 28, fontWeight: '700', marginBottom: 8 },
-    introSubtitle: { color: colors.textDim, fontSize: 14, lineHeight: 20 },
-    stepIndicator: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: colors.surface2,
-      borderWidth: 2,
-      borderColor: colors.border,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginRight: 8,
-    },
-    stepIndicatorActive: {
+    iconWrap: {
+      width: 80,
+      height: 80,
+      borderRadius: 20,
       backgroundColor: colors.accent,
-      borderColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 16,
     },
-    stepIndicatorText: { color: colors.text, fontSize: 11, fontWeight: '600' },
-    stepIndicatorTextActive: { color: colors.accentInk, fontSize: 11, fontWeight: '600' },
+    title: {
+      color: colors.text,
+      fontSize: 22,
+      fontWeight: '700',
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+    body: {
+      color: colors.textDim,
+      fontSize: 15,
+      lineHeight: 22,
+      textAlign: 'center',
+    },
+    dotsRow: { flexDirection: 'row', marginBottom: 24, gap: 8 },
+    dot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: colors.border,
+    },
+    dotActive: { backgroundColor: colors.accent },
+    navRow: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8 },
+    btnSecondary: {
+      backgroundColor: colors.surface2,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+    },
+    btnSecondaryText: { color: colors.textDim, fontSize: 14, fontWeight: '600' },
+    btnPrimary: {
+      backgroundColor: colors.accent,
+      borderRadius: radius.md,
+      paddingVertical: 14,
+      paddingHorizontal: 24,
+    },
+    btnPrimaryText: { color: colors.accentInk, fontSize: 16, fontWeight: '700' },
     skipBtn: {
+      alignSelf: 'flex-end',
       paddingVertical: 8,
       paddingHorizontal: 12,
     },
     skipBtnText: { color: colors.textFaint, fontSize: 12, fontWeight: '600' },
-    doneBtn: {
-      backgroundColor: colors.accent,
-      borderRadius: radius.md,
-      paddingVertical: 16,
-      paddingHorizontal: 24,
-      alignItems: 'center',
-      marginTop: 24,
-    },
-    doneBtnText: { color: colors.accentInk, fontSize: 16, fontWeight: '700' },
-    doneBtnSecondary: {
-      backgroundColor: colors.surface2,
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: radius.md,
-      paddingVertical: 16,
-      paddingHorizontal: 24,
-      alignItems: 'center',
-      marginTop: 24,
-    },
-    doneBtnSecondaryText: { color: colors.textDim, fontSize: 16, fontWeight: '600' },
-    dotsRow: { flexDirection: 'row', marginBottom: 24, gap: 6 },
-    dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.border },
-    dotActive: { backgroundColor: colors.accent },
-    progressBar: { height: 3, borderRadius: 1.5, backgroundColor: colors.surface2, marginBottom: 24 },
-    progressFill: { height: 3, borderRadius: 1.5, backgroundColor: colors.accent },
   });
 }
 
 export function OnboardingScreen() {
   const s = useThemedStyles();
   const navigation = useNavigation<any>();
-  const wasOnboarded = useVitaStore((s) => s.wasOnboarded);
   const setWasOnboarded = useVitaStore((s) => s.setWasOnboarded);
   const [currentStep, setCurrentStep] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
@@ -101,11 +109,9 @@ export function OnboardingScreen() {
 
   const handleSkip = useCallback(() => {
     Alert.alert(
-      'Saltare l\'onboarding',
-      'L\'onboarding può essere ripreso dalle Impostazioni in qualsiasi momento.',
-      [
-        { text: 'Ok', style: 'cancel' },
-      ]
+      'Saltare l\'onboarding?',
+      'Puoi riprenderlo da Impostazioni in qualsiasi momento.',
+      [{ text: 'Continua', style: 'cancel' }],
     );
   }, []);
 
@@ -116,35 +122,44 @@ export function OnboardingScreen() {
       await setWasOnboarded(true);
       navigation.replace('MainTabs');
     } catch {
-      Alert.alert('Errore', 'Non sono stato in grado di salvare la scelta.');
+      Alert.alert('Errore', 'Non e stato possibile salvare l\'avvio.');
     } finally {
       setIsSaving(false);
     }
   }, [isSaving, setWasOnboarded, navigation]);
 
-  // Step contents
   const steps = [
     {
-      title: 'Benvenuto in Vita',
-      body:
-        'Vita è il tuo compagno AI per l\'ADHD. Aiuta a catturare pensieri, estrarre task e mantenere un vault personale. Tutto è locale, crittografato e gestito dalla tua chiave OpenRouter.',
+      iconName: 'capture',
+      title: 'Cattura istantaneamente',
+      body: 'Tocca qui sotto, premi il microfono o scrivi. Lior ti aiuta a mettere ordine senza giudizio.',
     },
     {
-      title: 'Lior — La tua presenza AI',
-      body:
-        'Lior non è un chatbot generico. Ha una personalità fissa (italiano), estrae solo task con verbi d\'azione espliciti ("devo", "farò", "ricordami"), e non diagnostica nulla. Risponde tramite OpenRouter (cloud proxy, header-only).',
+      iconName: 'lior',
+      title: 'Lior - il tuo compagno ADHD',
+      body: 'Parla con lui. Scrive spunti. Estrae task solo se usi verbi espliciti ("devo", "faro", "ricordami").',
     },
     {
-      title: '🔐 Privacy e Sicurezza',
-      body:
-        'La tua chiave API non lascia mai il dispositivo se non come header Authorization verso OpenRouter. Non c\'è telemetria, nessun log. Le risposte sono crittografate e transitano solo tra il telefono e OpenRouter.',
+      iconName: 'breakdown',
+      title: 'Micro-steps fattibili',
+      body: 'Ogni task diventa piccoli passi da <=2 minuti. Niente paralisi da "dove inizio".',
     },
     {
-      title: '⚡ Impostazioni rapide',
-      body:
-        'Puoi scegliere la voce di Lior (6 profili vocali italiani), attivare la bassa stimolazione per risposte più brevi, e selezionare i modelli per chat/estrazione/scomposizione. Tutto configurabile da Impostazioni.',
+      iconName: 'vault',
+      title: 'Il tuo vault locale',
+      body: 'Tutto salva. Niente nuvola. Niente perdita. Mai spostato, mai condiviso.',
     },
   ];
+
+  const renderIcon = (name: string) => {
+    const icons: Record<string, string> = {
+      capture: '➕',
+      lior: '🔮',
+      breakdown: '📋',
+      vault: '🔒',
+    };
+    return icons[name] ?? '✨';
+  };
 
   const step = steps[currentStep];
 
@@ -153,7 +168,10 @@ export function OnboardingScreen() {
       contentContainerStyle={s.content}
       showsVerticalScrollIndicator={false}
     >
-      {/* Progress dots + horizontal bar */}
+      <TouchableOpacity style={s.skipBtn} onPress={handleSkip}>
+        <Text style={s.skipBtnText}>Salta</Text>
+      </TouchableOpacity>
+
       <View style={s.dotsRow}>
         {Array.from({ length: TOTAL_STEPS }, (_, i) => (
           <View
@@ -164,31 +182,29 @@ export function OnboardingScreen() {
             ]}
           />
         ))}
-        <View style={s.progressBar}>
-          <View style={{ width: ((currentStep + 1) / TOTAL_STEPS) * 100, ...s.progressFill }} />
+      </View>
+
+      <View style={s.card}>
+        <View style={s.iconWrap}>
+          <Text style={{ fontSize: 32 }}>{renderIcon(step.iconName)}</Text>
         </View>
+        <Text style={s.title}>{step.title}</Text>
+        <Text style={s.body}>{step.body}</Text>
       </View>
 
-      {/* Step content */}
-      <View style={s.introCard}>
-        <Text style={s.introTitle}>{step.title}</Text>
-        <Text style={s.introSubtitle}>{step.body}</Text>
-      </View>
-
-      {/* Navigation buttons */}
-      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 24 }}>
+      <View style={s.navRow}>
         {currentStep > 0 ? (
-          <TouchableOpacity style={s.doneBtnSecondary} onPress={() => goTo(currentStep - 1)}>
-            <Text style={s.doneBtnSecondaryText}>Indietro</Text>
+          <TouchableOpacity style={s.btnSecondary} onPress={() => goTo(currentStep - 1)}>
+            <Text style={s.btnSecondaryText}>Indietro</Text>
           </TouchableOpacity>
         ) : null}
         {currentStep < TOTAL_STEPS - 1 ? (
-          <TouchableOpacity style={s.doneBtnSecondary} onPress={() => goTo(currentStep + 1)}>
-            <Text style={s.doneBtnSecondaryText}>Avanti</Text>
+          <TouchableOpacity style={s.btnSecondary} onPress={() => goTo(currentStep + 1)}>
+            <Text style={s.btnSecondaryText}>Avanti</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity style={s.doneBtn} onPress={handleDone}>
-            <Text style={s.doneBtnText}>Inizia</Text>
+          <TouchableOpacity style={s.btnPrimary} onPress={handleDone}>
+            <Text style={s.btnPrimaryText}>Inizia</Text>
           </TouchableOpacity>
         )}
       </View>
