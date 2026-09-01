@@ -5,7 +5,7 @@
  * Reads from vaultEntries[], filters by type, searches by content/title.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,10 +13,12 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useVitaStore } from '../store/vita-store';
 import { useTheme } from '../design/ThemeProvider';
-import type { VaultEntryType } from '../store/vita-store';
+import { clusterEntries } from '../ai';
+import type { VaultEntryType, ProjectCluster } from '../store/vita-store';
 
 type Filter = 'all' | VaultEntryType;
 
@@ -107,12 +109,63 @@ function useThemedStyles() {
 export function VaultScreen() {
   const s = useThemedStyles();
   const vaultEntries = useVitaStore((s) => s.vaultEntries);
+  const projectClusters = useVitaStore((s) => s.projectClusters);
+  const addProjectCluster = useVitaStore((s) => s.addProjectCluster);
+  const removeProjectCluster = useVitaStore((s) => s.removeProjectCluster);
+  const updateEntry = useVitaStore((s) => s.updateEntry);
+  const apiKey = useVitaStore((s) => s.openRouterApiKey);
   const [filter, setFilter] = useState<Filter>('all');
+  const [clusterFilter, setClusterFilter] = useState<ProjectCluster | null>(null);
   const [query, setQuery] = useState('');
+  const [isClustering, setIsClustering] = useState(false);
+
+  const handleRunClustering = useCallback(async () => {
+    if (!apiKey) {
+      Alert.alert('Chiave API assente', 'Configura la chiave OpenRouter per usare il clustering.');
+      return;
+    }
+    const active = vaultEntries.filter((e) => !e.isArchived);
+    if (active.length < 3) {
+      Alert.alert('poche entry', 'Aggiungi almeno 3 entry per attivare il clustering.');
+      return;
+    }
+    setIsClustering(true);
+    try {
+      const labels = active.map((e) => e.title || e.content.slice(0, 80));
+      const results = await clusterEntries(labels, apiKey);
+      let created = 0;
+      for (const r of results) {
+        if (r.confidenceScore >= 0.75) {
+          const cluster = addProjectCluster(r.clusterName, r.confidenceScore);
+          // Seed-assign the sample entry to this cluster by text match
+          const matchIdx = active.findIndex(
+            (e) => e.title.includes(r.sample) || r.sample.includes(e.title?.slice(0, 15)),
+          );
+          if (matchIdx >= 0) {
+            updateEntry(active[matchIdx].id, { projectClusterId: cluster.id });
+          }
+          created++;
+        }
+      }
+      if (created === 0) {
+        Alert.alert('Nessun cluster trovato', 'Prova ad aggiungere più entry con temi simili.');
+      } else {
+        Alert.alert('Fatto', `${created} cluster creati.`);
+      }
+    } catch (err) {
+      Alert.alert('Errore clustering', (err as Error).message);
+    } finally {
+      setIsClustering(false);
+    }
+  }, [apiKey, vaultEntries, addProjectCluster, updateEntry]);
 
   const visible = vaultEntries
     .filter((e) => !e.isArchived)
     .filter((e) => (filter === 'all' ? true : e.type === filter))
+    .filter((e) => {
+      if (clusterFilter) return e.projectClusterId === clusterFilter.id;
+      return true;
+    })
     .filter((e) => {
       if (!query) return true;
       const q = query.toLowerCase();
@@ -159,6 +212,60 @@ export function VaultScreen() {
         })}
       </View>
 
+      {/* Cluster pills + clustering button */}
+      <View style={s.pillRow}>
+        {projectClusters.length > 0 && (
+          <TouchableOpacity
+            style={[s.pill, !clusterFilter && s.pillOn]}
+            onPress={() => setClusterFilter(null)}
+          >
+            <Text style={[s.pillText, !clusterFilter && s.pillTextOn]}>
+              Tutti
+            </Text>
+          </TouchableOpacity>
+        )}
+        {projectClusters.map((cluster) => {
+          const isActive = clusterFilter?.id === cluster.id;
+          return (
+            <TouchableOpacity
+              key={cluster.id}
+              style={[s.pill, isActive && s.pillOn]}
+              onPress={() => setClusterFilter(isActive ? null : cluster)}
+              onLongPress={() => {
+                Alert.alert(
+                  'Rimuovi cluster',
+                  `Rimuovere "${cluster.clusterName}"?`,
+                  [
+                    { text: 'Annulla', style: 'cancel' },
+                    {
+                      text: 'Rimuovi',
+                      style: 'destructive',
+                      onPress: () => {
+                        removeProjectCluster(cluster.id);
+                        if (clusterFilter?.id === cluster.id) setClusterFilter(null);
+                      },
+                    },
+                  ],
+                );
+              }}
+            >
+              <Text style={[s.pillText, isActive && s.pillTextOn]}>
+                📁 {cluster.clusterName}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+        <TouchableOpacity
+          style={[s.pill, isClustering && s.pillOn]}
+          onPress={handleRunClustering}
+          disabled={isClustering}
+        >
+          <Text style={[s.pillText, isClustering && s.pillTextOn]}>
+            {isClustering ? '⏳...' : '🔮 Raggruppa'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <ScrollView contentContainerStyle={s.content}>
         {visible.length === 0 ? (
           <View style={s.empty}>
@@ -180,6 +287,12 @@ export function VaultScreen() {
                 )}
               </View>
               <Text style={s.cardTitle}>{entry.title}</Text>
+              {entry.projectClusterId && (() => {
+                const cluster = projectClusters.find(c => c.id === entry.projectClusterId);
+                return cluster ? (
+                  <Text style={s.cardMeta}>📁 {cluster.clusterName}</Text>
+                ) : null;
+              })()}
               <Text style={s.cardContent} numberOfLines={3}>
                 {entry.content}
               </Text>

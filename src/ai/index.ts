@@ -56,6 +56,7 @@ export {
   streamChat,
   liorHelpMeThink,
   liorRereadDump,
+  clusterEntries,
   LiorError,
   getModelCatalog,
   defaultModelIdFor,

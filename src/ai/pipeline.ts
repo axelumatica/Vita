@@ -625,6 +625,59 @@ Return only the sentence, no prefix, no explanation.` as const;
   );
 }
 
+/**
+ * Run a simple clustering pass over a list of entry titles/content.
+ * Groups entries that share recurring keywords/themes and returns cluster
+ * suggestions with confidence scores. Used to pre-populate project clusters
+ * before the user confirms/renames them.
+ *
+ * @param entries        Array of entry titles or short content strings.
+ * @param apiKey         OpenRouter API key.
+ * @returns              Array of { clusterName, confidenceScore, sample }.
+ */
+export async function clusterEntries(
+  entries: string[],
+  apiKey: string,
+): Promise<{ clusterName: string; confidenceScore: number; sample: string }[]> {
+  if (entries.length === 0) return [];
+
+  const sampleEntries = entries.slice(0, 6).map((e, i) => `${i + 1}. ${e}`).join('\n');
+  const userPrompt = `Group these diary/task entries into thematic project clusters.
+
+Entries:
+${sampleEntries}
+
+For each cluster, return:
+- A concise cluster name (2-5 words, in Italian if the entries are Italian)
+- A confidence score 0.0 - 1.0 indicating how strongly the entries belong together
+- One example entry that best represents the cluster
+
+Return at most 3 clusters. Output ONLY valid JSON:
+[
+  {"clusterName": "...", "confidenceScore": 0.x, "sample": "..."}
+]` as const;
+
+  const model = defaultModelFor('chat');
+  const raw = await orChat(
+    [{ role: 'user', content: userPrompt }],
+    apiKey,
+    model.id,
+    0.3,
+    500,
+  );
+
+  try {
+    const parsed = JSON.parse(raw) as Array<{
+      clusterName: string;
+      confidenceScore: number;
+      sample: string;
+    }>;
+    return parsed.slice(0, 3);
+  } catch {
+    return [];
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 //  Diagnostics export (for VoiceSettingsScreen / debug panel)
 // ─────────────────────────────────────────────────────────────────────────────
