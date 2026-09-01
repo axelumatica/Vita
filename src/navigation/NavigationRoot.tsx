@@ -19,12 +19,15 @@ import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
+import { useTheme } from '../design/ThemeProvider';
+import { useVitaStore } from '../store/vita-store';
 import { HomeScreen } from '../screens/HomeScreen';
 import { DiaryScreen } from '../screens/DiaryScreen';
 import { LiorScreen } from '../screens/LiorScreen';
 import { TasksScreen } from '../screens/TasksScreen';
 import { VaultScreen } from '../screens/VaultScreen';
 import { VoiceSettingsScreen } from '../screens/VoiceSettingsScreen';
+import { OnboardingScreen } from '../screens/OnboardingScreen';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Navigator types
@@ -33,6 +36,7 @@ import { VoiceSettingsScreen } from '../screens/VoiceSettingsScreen';
 export type RootStackParamList = {
   MainTabs: undefined;
   Settings: undefined; // modal
+  Onboarding: undefined;
 };
 
 export type MainTabsParamList = {
@@ -47,27 +51,66 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabsParamList>();
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Dark theme
+//  Tab bar — raised center button for Lior
 // ─────────────────────────────────────────────────────────────────────────────
 
-const VitaDarkTheme = {
-  ...DefaultTheme,
-  dark: true,
-  colors: {
-    ...DefaultTheme.colors,
-    background: '#0B132B',
-    card: '#0B132B',
-    text: '#F7F4EA',
-    border: '#2A385B',
-    primary: '#F7F4EA',
-  },
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  Custom tab bar — raised center button for Lior
-// ─────────────────────────────────────────────────────────────────────────────
+function useTabStyles() {
+  const { colors, radius } = useTheme();
+  return StyleSheet.create({
+    bar: {
+      flexDirection: 'row',
+      backgroundColor: colors.bg,
+      borderTopWidth: 1,
+      borderTopColor: colors.surface,
+      paddingBottom: 20, // safe area bottom
+      paddingTop: 8,
+    },
+    tab: {
+      flex: 1,
+      alignItems: 'center',
+      paddingTop: 6,
+    },
+    tabIcon: {
+      fontSize: 18,
+      marginBottom: 2,
+    },
+    tabLabel: {
+      fontSize: 10,
+      color: colors.textFaint,
+      fontFamily: 'monospace',
+      letterSpacing: 0.4,
+    },
+    tabLabelActive: {
+      color: colors.text,
+      fontWeight: '600',
+    },
+    // Lior raised center button
+    liorWrap: {
+      flex: 1,
+      alignItems: 'center',
+      marginTop: -20, // pulls it above the bar
+    },
+    liorBtn: {
+      width: 52,
+      height: 52,
+      borderRadius: 26,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.35,
+      shadowRadius: 10,
+      elevation: 10,
+    },
+    liorBtnText: {
+      fontSize: 20,
+    },
+  });
+}
 
 function VitaTabBar({ state, descriptors, navigation }: any) {
+  const tabStyles = useTabStyles();
   return (
     <View style={tabStyles.bar}>
       {state.routes.map((route: any, index: number) => {
@@ -116,58 +159,6 @@ function VitaTabBar({ state, descriptors, navigation }: any) {
   );
 }
 
-const tabStyles = StyleSheet.create({
-  bar: {
-    flexDirection: 'row',
-    backgroundColor: '#0B132B',
-    borderTopWidth: 1,
-    borderTopColor: '#1C2541',
-    paddingBottom: 20, // safe area bottom
-    paddingTop: 8,
-  },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    paddingTop: 6,
-  },
-  tabIcon: {
-    fontSize: 18,
-    marginBottom: 2,
-  },
-  tabLabel: {
-    fontSize: 10,
-    color: '#7c8299',
-    fontFamily: 'monospace',
-    letterSpacing: 0.4,
-  },
-  tabLabelActive: {
-    color: '#F7F4EA',
-    fontWeight: '600',
-  },
-  // Lior raised center button
-  liorWrap: {
-    flex: 1,
-    alignItems: 'center',
-    marginTop: -20, // pulls it above the bar
-  },
-  liorBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#F7F4EA',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 10,
-  },
-  liorBtnText: {
-    fontSize: 20,
-  },
-});
-
 // ─────────────────────────────────────────────────────────────────────────────
 //  Tab navigator
 // ─────────────────────────────────────────────────────────────────────────────
@@ -214,23 +205,47 @@ function MainTabs() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function NavigationRoot() {
+  const { colors } = useTheme();
+  const wasOnboarded = useVitaStore((s) => s.wasOnboarded);
+
+  // Build a theme object from the current palette so the navigation
+  // container's background/card/text/border all track the theme.
+  const theme = {
+    ...DefaultTheme,
+    dark: colors.text === '#0B132B',
+    colors: {
+      ...DefaultTheme.colors,
+      background: colors.bg,
+      card: colors.bg,
+      text: colors.text,
+      border: colors.border,
+      primary: colors.accent,
+    },
+  };
+
   return (
-    <NavigationContainer theme={VitaDarkTheme}>
+    <NavigationContainer theme={theme}>
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
           animation: 'slide_from_bottom',
         }}
       >
-        <Stack.Screen name="MainTabs" component={MainTabs} />
-        <Stack.Screen
-          name="Settings"
-          component={VoiceSettingsScreen}
-          options={{
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
-          }}
-        />
+        {wasOnboarded ? (
+          <>
+            <Stack.Screen name="MainTabs" component={MainTabs} />
+            <Stack.Screen
+              name="Settings"
+              component={VoiceSettingsScreen}
+              options={{
+                presentation: 'modal',
+                animation: 'slide_from_bottom',
+              }}
+            />
+          </>
+        ) : (
+          <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ headerShown: false }} />
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );

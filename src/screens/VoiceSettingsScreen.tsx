@@ -64,7 +64,6 @@ export function VoiceSettingsScreen() {
   const setCustomPersonaPrompt = useVitaStore((s) => s.setCustomPersonaPrompt);
   const lowStimulus = useVitaStore((s) => s.lowStimulus);
   const setLowStimulus = useVitaStore((s) => s.setLowStimulus);
-  const wasOnboarded = useVitaStore((s) => s.wasOnboarded);
   const setWasOnboarded = useVitaStore((s) => s.setWasOnboarded);
 
   const [showPreview, setShowPreview] = useState(false);
@@ -144,63 +143,6 @@ export function VoiceSettingsScreen() {
           );
         })}
       </View>
-    );
-  }
-
-  if (!wasOnboarded) {
-    return (
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView contentContainerStyle={styles.onboardingScroll}>
-          <View style={styles.onboardingCard}>
-            <Text style={styles.onboardingTitle}>Benvenuto in Vita</Text>
-            <Text style={styles.onboardingSubtitle}>
-              Lior è il tuo compagno AI per ADHD. Prima di iniziare,
-              ecco cosa devi sapere.
-            </Text>
-
-            <View style={styles.onboardingPoint}>
-              <Text style={styles.onboardingPointTitle}>🎭 Personalità</Text>
-              <Text style={styles.onboardingPointText}>
-                Lior ha una personalità fissa (non un chatbot generico). Parla italiano,
-                estrae solo task con verbi d'azione espliciti, e non diagnostica.
-              </Text>
-            </View>
-
-            <View style={styles.onboardingPoint}>
-              <Text style={styles.onboardingPointTitle}>☁️ Cloud Proxy</Text>
-              <Text style={styles.onboardingPointText}>
-                L'elaborazione avviene tramite OpenRouter (crittografato). Il badge
-                "[Cloud Engine] • [Encrypted Proxy]" è sempre visibile.
-              </Text>
-            </View>
-
-            <View style={styles.onboardingPoint}>
-              <Text style={styles.onboardingPointTitle}>🔐 Privacy</Text>
-              <Text style={styles.onboardingPointText}>
-                La tua chiave API non lascia mai il dispositivo se non come header
-                Authorization verso OpenRouter. Niente log, niente telemetria.
-              </Text>
-            </View>
-
-            <View style={styles.onboardingPoint}>
-              <Text style={styles.onboardingPointTitle}>⚡ Low-Stimulus</Text>
-              <Text style={styles.onboardingPointText}>
-                Attivabile qui: risposte più brevi, meno variazioni, input più scarsi.
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              style={styles.onboardingBtn}
-              onPress={() => setWasOnboarded(true)}
-            >
-              <Text style={styles.onboardingBtnText}>Capito, inizio</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
     );
   }
 
@@ -456,6 +398,33 @@ export function VoiceSettingsScreen() {
             Ottieni una chiave gratuita su openrouter.ai. I modelli ":free" hanno
             limiti di rate ma nessun costo.
           </Text>
+        </View>
+
+        {/* ── Reset onboarding ─────────────────────────────────────── */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Onboarding</Text>
+          <TouchableOpacity
+            style={styles.resetOnboardingBtn}
+            onPress={() => {
+              Alert.alert(
+                'Riavvia onboarding',
+                'L\'onboarding verrà mostrato nuovamente al prossimo avvio.',
+                [
+                  { text: 'Annulla', style: 'cancel' },
+                  {
+                    text: 'Riavvia',
+                    style: 'destructive',
+                    onPress: () => {
+                      setWasOnboarded(false);
+                      Alert.alert('Fatto', 'Riavvia l\'onboarding al prossimo avvio.');
+                    },
+                  },
+                ],
+              );
+            }}
+          >
+            <Text style={styles.resetOnboardingBtnText}>🔁 Riavvia onboarding</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -802,6 +771,21 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 24,
+  },
+  resetOnboardingBtn: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#2A385B',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  resetOnboardingBtnText: {
+    color: '#7c8299',
+    fontSize: 13,
+    fontWeight: '600',
   },
   onboardingCard: {
     backgroundColor: '#1C2541',
