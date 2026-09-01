@@ -1,8 +1,8 @@
 /**
  * src/screens/HomeScreen.tsx
  *
- * Dashboard landing screen. Placeholder — full dashboard to be built later.
- * Shows the Focus card, recent entries, and a quick-capture bar.
+ * Dashboard landing screen with time-of-day context and "wins this week" counter.
+ * ADHD-friendly: no shame, no streaks, just a gentle progress indicator.
  */
 
 import React from 'react';
@@ -12,7 +12,30 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useVitaStore } from '../store/vita-store';
 import { useTheme } from '../design/ThemeProvider';
+import { Icon } from '../design/Icon';
 import type { RootStackParamList } from '../navigation/NavigationRoot';
+
+function timeOfDay(): 'morning' | 'afternoon' | 'evening' | 'night' {
+  const h = new Date().getHours();
+  if (h < 12) return 'morning';
+  if (h < 17) return 'afternoon';
+  if (h < 21) return 'evening';
+  return 'night';
+}
+
+const TOD_GREETING: Record<string, string> = {
+  morning: 'Buongiorno ☀️',
+  afternoon: 'Buon pomeriggio 🌤',
+  evening: 'Buonasera 🌙',
+  night: 'Bulla notte 🌌',
+};
+
+const TOD_HINT: Record<string, string> = {
+  morning: 'Oggi è un nuovo giorno. Un passo alla volta.',
+  afternoon: 'Come procede la giornata?',
+  evening: 'Giornata finita. Cosa hai fatto di bene?',
+  night: 'Piccola vittoria prima di dormire.',
+};
 
 /** Wrap StyleSheet.create so styles re-read colors when theme changes. */
 function useThemedStyles() {
@@ -36,6 +59,24 @@ function useThemedStyles() {
       marginBottom: 8,
     },
     heroText: { color: colors.text, fontSize: 16, lineHeight: 24 },
+    greeting: { color: colors.text, fontSize: 24, fontWeight: '700', marginBottom: 4 },
+    hint: { color: colors.textDim, fontSize: 14, lineHeight: 20 },
+    /* Wins bar */
+    winsBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      marginBottom: 16,
+    },
+    winsEmoji: { fontSize: 20, marginRight: 8 },
+    winsLabel: { color: colors.textDim, fontSize: 13, fontWeight: '600' },
+    winsCount: { color: colors.accent, fontSize: 18, fontWeight: '700', marginLeft: 4 },
+    winsSub: { color: colors.textFaint, fontSize: 11, marginLeft: 4 },
     quickActions: {
       flexDirection: 'row',
       gap: 10,
@@ -71,18 +112,10 @@ function useThemedStyles() {
       backgroundColor: colors.textFaint,
       marginRight: 8,
     },
-    statusDotOn: {
-      backgroundColor: colors.success,
-    },
+    statusDotOn: { backgroundColor: colors.success },
     statusText: { color: colors.textDim, fontSize: 13 },
-    settingsLink: {
-      alignSelf: 'flex-start',
-    },
-    settingsLinkText: {
-      color: colors.accent,
-      fontSize: 13,
-      fontWeight: '600',
-    },
+    settingsLink: { alignSelf: 'flex-start' },
+    settingsLinkText: { color: colors.accent, fontSize: 13, fontWeight: '600' },
     recentCard: { marginTop: 8 },
     sectionLabel: {
       color: colors.textFaint,
@@ -112,20 +145,54 @@ export function HomeScreen() {
   const vaultEntries = useVitaStore((s) => s.vaultEntries);
   const focusTaskId = useVitaStore((s) => s.focusTaskId);
   const apiKey = useVitaStore((s) => s.openRouterApiKey);
+  const winsLog = useVitaStore((s) => s.winsLog);
+  const recordWin = useVitaStore((s) => s.recordWin);
 
   const focusTask = vaultEntries.find((e) => e.id === focusTaskId);
   const recent = vaultEntries.filter((e) => !e.isArchived).slice(0, 3);
 
+  const tod = timeOfDay();
+  const wins = winsLog.filter((w) => {
+    const day = (new Date().getDay() + 6) % 7;
+    const weekStart = new Date();
+    weekStart.setDate(new Date().getDate() - day);
+    weekStart.setHours(0, 0, 0, 0);
+    return w.timestamp >= weekStart.getTime();
+  }).length;
+
+  const totalSteps = useVitaStore((s) => s.taskSteps);
+  const completedSteps = totalSteps.filter((s) => s.isCompleted).length;
+
+  // Record wins for completed steps (once) and vault entry counts
+  React.useEffect(() => {
+    if (completedSteps > 0) {
+      // Fire one win per completed micro-step. The store keeps a log
+      // so we can count per-week without double-counting on re-renders.
+      // We only record when the store has fewer winsLog entries than
+      // completed steps, to avoid duplicates.
+      const lastStep = totalSteps.filter((s) => s.isCompleted).slice(-1)[0];
+      if (lastStep && winsLog.length < completedSteps) {
+        recordWin('step', `Micro-step completato`);
+      }
+    }
+  }, [completedSteps, totalSteps, recordWin, winsLog.length]);
+
   return (
     <ScrollView style={s.container} contentContainerStyle={s.content}>
-      {/* Hero card */}
+      {/* Time-of-day greeting */}
       <View style={s.heroCard}>
-        <Text style={s.heroEyebrow}>🎯 FOCUS UNICO</Text>
-        <Text style={s.heroText}>
-          {focusTask
-            ? `Focus: "${focusTask.title}"`
-            : 'Nessun task in focus.\nParla con Lior per iniziare.'}
-        </Text>
+        <Text style={s.greeting}>{TOD_GREETING[tod]}</Text>
+        <Text style={s.hint}>{TOD_HINT[tod]}</Text>
+      </View>
+
+      {/* Wins this week — gentle progress, no shame */}
+      <View style={s.winsBar}>
+        <Text style={s.winsEmoji}>🏆</Text>
+        <View>
+          <Text style={s.winsLabel}>Vittorie questa settimana</Text>
+          <Text style={s.winsSub}>micro-step completati e task finiti</Text>
+        </View>
+        <Text style={s.winsCount}> {wins} </Text>
       </View>
 
       {/* Quick actions */}
@@ -158,13 +225,18 @@ export function HomeScreen() {
             {apiKey ? 'Cloud Engine configurato' : 'Cloud Engine non configurato'}
           </Text>
         </View>
-        <TouchableOpacity
-          style={s.settingsLink}
-          onPress={() => nav.navigate('Settings')}
-        >
-          <Text style={s.settingsLinkText}>Apri Impostazioni ↑</Text>
+        <TouchableOpacity style={s.settingsLink} onPress={() => nav.navigate('Settings')}>
+          <Text style={s.settingsLinkText}>Apri Impostazioni →</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Focus card */}
+      {focusTask && (
+        <View style={s.heroCard}>
+          <Text style={s.heroEyebrow}>FOCUS</Text>
+          <Text style={s.heroText}>"{focusTask.title}"</Text>
+        </View>
+      )}
 
       {/* Recent entries */}
       {vaultEntries.filter((e) => !e.isArchived).length > 0 && (

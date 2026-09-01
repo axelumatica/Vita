@@ -198,6 +198,14 @@ export interface VitaStore {
   isListening: boolean;
   setIsListening: (listening: boolean) => void;
 
+  // ── Wins this week (ADHD-friendly, no streaks) ─────────────────────
+  /** A "win" is any completed micro-step or a TASK archived/finished.
+   *  Tracked with timestamps so we can count wins per ISO week. */
+  winsLog: { id: string; timestamp: number; kind: 'step' | 'task'; label: string }[];
+  recordWin: (kind: 'step' | 'task', label: string) => void;
+  /** Returns wins in the current ISO week (Mon–Sun). */
+  winsThisWeek: () => number;
+
   // ── Debug ───────────────────────────────────────────────────────────
   resetAll: () => void;
 }
@@ -420,6 +428,32 @@ export const useVitaStore = create<VitaStore>()(
       isListening: false,
       setIsListening: (listening) => set({ isListening: listening }),
 
+      // ── Wins this week (ADHD-friendly, no streaks) ──────────────────
+      winsLog: [],
+      recordWin: (kind, label) =>
+        set((state) => ({
+          winsLog: [
+            ...state.winsLog,
+            {
+              id: makeId('win'),
+              timestamp: Date.now(),
+              kind,
+              label: label.slice(0, 60),
+            },
+          ],
+        })),
+      winsThisWeek: () => {
+        const log = get().winsLog;
+        const now = new Date();
+        // ISO week start (Monday) at 00:00 local time.
+        const day = (now.getDay() + 6) % 7; // 0 = Mon
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - day);
+        weekStart.setHours(0, 0, 0, 0);
+        const startMs = weekStart.getTime();
+        return log.filter((w) => w.timestamp >= startMs).length;
+      },
+
       // ── Debug ───────────────────────────────────────────────────────
       resetAll: () =>
         set({
@@ -436,6 +470,7 @@ export const useVitaStore = create<VitaStore>()(
           voiceProfileId: DEFAULT_VOICE_PROFILE_ID,
           customPersonaPrompt: '',
           customPersonaUnlocked: false,
+          winsLog: [],
         }),
     }),
     {
