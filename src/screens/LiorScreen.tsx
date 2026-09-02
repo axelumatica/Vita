@@ -422,10 +422,17 @@ export function LiorScreen() {
       <View style={s.topBar}>
         <Text style={s.processingBadge}>{PROCESSING_DISCLOSURE}</Text>
         <View style={s.topBarRight}>
-          <TouchableOpacity onPress={handleClear} style={s.clearBtn}>
+          <TouchableOpacity
+            accessibilityLabel="Svuota appuntino"
+            accessibilityRole="button"
+            onPress={handleClear}
+            style={s.clearBtn}
+          >
             <Text style={s.clearBtnText}>Svuota</Text>
           </TouchableOpacity>
           <TouchableOpacity
+            accessibilityLabel="Impostazioni"
+            accessibilityRole="button"
             onPress={() => navigation.navigate('Settings')}
             style={s.settingsBtn}
           >
@@ -498,6 +505,8 @@ export function LiorScreen() {
       {/* ── Shortcut buttons ──────────────────────────────────── */}
       <View style={s.shortcuts}>
         <TouchableOpacity
+          accessibilityLabel="Aiutami a pensare — ricevi un prompt per riflettere"
+          accessibilityRole="button"
           style={s.shortcutBtn}
           onPress={handleHelpMeThink}
           disabled={isLoading}
@@ -506,6 +515,8 @@ export function LiorScreen() {
           <Text style={[s.shortcutText, { marginLeft: 4 }]}>Aiutami a pensare</Text>
         </TouchableOpacity>
         <TouchableOpacity
+          accessibilityLabel="Estrai un task dal testo"
+          accessibilityRole="button"
           style={s.shortcutBtn}
           onPress={handleExtract}
           disabled={isLoading}
@@ -516,6 +527,8 @@ export function LiorScreen() {
       </View>
       <View style={s.shortcuts}>
         <TouchableOpacity
+          accessibilityLabel="Rileggi il dump — rivedi tutto il testo"
+          accessibilityRole="button"
           style={s.shortcutBtn}
           onPress={handleRereadDump}
           disabled={isLoading}
@@ -524,6 +537,8 @@ export function LiorScreen() {
           <Text style={[s.shortcutText, { marginLeft: 4 }]}>Rileggi il dump</Text>
         </TouchableOpacity>
         <TouchableOpacity
+          accessibilityLabel="Ferma tutto — congela l'interfaccia per calmarti"
+          accessibilityRole="button"
           style={s.shortcutBtn}
           onPress={handleFreezeEverything}
           disabled={isLoading}
@@ -534,12 +549,18 @@ export function LiorScreen() {
       </View>
       {/* ── Voice recording button ──────────────────────── */}
       {isTranscribing ? (
-        <View style={s.recordingInProgress}>
+        <View
+          accessibilityLabel="In ascolto"
+          accessibilityRole="button"
+          style={s.recordingInProgress}
+        >
           <Icon name="Mic" size={16} color={colors.accent} />
           <Text style={[s.recordingText, { marginLeft: 4 }]}>Ascolto...</Text>
         </View>
       ) : (
         <TouchableOpacity
+          accessibilityLabel={isRecording ? 'Stop registrazione vocale' : 'Registrazione vocale'}
+          accessibilityRole="button"
           style={[
             s.shortcutBtn,
             isRecording && s.shortcutBtnRecordingActive,
@@ -560,6 +581,8 @@ export function LiorScreen() {
             {lastExtraction.items.filter((i) => i.isDiary).length} riflessioni
           </Text>
           <TouchableOpacity
+            accessibilityLabel="Conferma tutti gli elementi estratti"
+            accessibilityRole="button"
             style={s.confirmBtn}
             onPress={handleConfirmAll}
             disabled={isLoading}

@@ -13,6 +13,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useVitaStore } from '../store/vita-store';
 import { useTheme } from '../design/ThemeProvider';
 import { Icon } from '../design/Icon';
+import { useLowStimulusEmphasis, useLowStimulusMotion } from '../design/lowStimulus';
 import type { RootStackParamList } from '../navigation/NavigationRoot';
 
 function timeOfDay(): 'morning' | 'afternoon' | 'evening' | 'night' {
@@ -139,6 +140,8 @@ function useThemedStyles() {
 export function HomeScreen() {
   const { colors } = useTheme();
   const s = useThemedStyles();
+  const emphasis = useLowStimulusEmphasis();
+  const motion = useLowStimulusMotion();
   const nav = useNavigation<CompositeNavigationProp<
     BottomTabNavigationProp<Record<string, undefined>>,
     NativeStackNavigationProp<RootStackParamList>
