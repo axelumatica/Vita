@@ -402,7 +402,8 @@ export async function breakdownTask(
  *   - Live conversation in the LiorScreen scratchpad
  *
  * For streaming live transcription with incremental LLM output, callers should
- * use `streamChat` (not yet implemented — placeholder exported for future use).
+ * use `streamChat` which yields text chunks incrementally as they arrive from
+ * OpenRouter.
  *
  * @param messages     Array of chat turns, newest last. Does NOT include the
  *                    system prompt — that is injected here.

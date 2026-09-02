@@ -21,6 +21,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Pressable,
   StyleSheet,
   ScrollView,
   Alert,
@@ -431,18 +432,16 @@ export function VoiceSettingsScreen() {
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity
+            <Pressable
               style={styles.unlockButton}
-              onPress={() => {
-                // Secret unlock: hold to activate
-                setTimeout(() => unlockCustomPersona(), 500);
-              }}
-              activeOpacity={0.6}
+              onLongPress={unlockCustomPersona}
+              delayLongPress={1000}
+              pressRetentionOffset={20}
             >
               <Text style={styles.unlockButtonText}>
                 Tieni premuto per sbloccare
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           )}
         </View>
 

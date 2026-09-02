@@ -137,6 +137,7 @@ function useThemedStyles() {
 }
 
 export function HomeScreen() {
+  const { colors } = useTheme();
   const s = useThemedStyles();
   const nav = useNavigation<CompositeNavigationProp<
     BottomTabNavigationProp<Record<string, undefined>>,
@@ -187,7 +188,7 @@ export function HomeScreen() {
 
       {/* Wins this week — gentle progress, no shame */}
       <View style={s.winsBar}>
-        <Text style={s.winsEmoji}>🏆</Text>
+        <Icon name="Trophy" size={20} color={colors.textFaint} />
         <View>
           <Text style={s.winsLabel}>Vittorie questa settimana</Text>
           <Text style={s.winsSub}>micro-step completati e task finiti</Text>
@@ -201,19 +202,28 @@ export function HomeScreen() {
           style={s.quickBtn}
           onPress={() => nav.navigate('LiorTab')}
         >
-          <Text style={s.quickBtnText}>🎙 Voce</Text>
+          <View style={{ alignItems: 'center', gap: 4 }}>
+            <Icon name="Mic" size={16} color={colors.textDim} />
+            <Text style={s.quickBtnText}>Voce</Text>
+          </View>
         </TouchableOpacity>
         <TouchableOpacity
           style={s.quickBtn}
           onPress={() => nav.navigate('TasksTab')}
         >
-          <Text style={s.quickBtnText}>⚡ Task</Text>
+          <View style={{ alignItems: 'center', gap: 4 }}>
+            <Icon name="Zap" size={16} color={colors.textDim} />
+            <Text style={s.quickBtnText}>Task</Text>
+          </View>
         </TouchableOpacity>
         <TouchableOpacity
           style={s.quickBtn}
           onPress={() => nav.navigate('DiaryTab')}
         >
-          <Text style={s.quickBtnText}>📖 Diario</Text>
+          <View style={{ alignItems: 'center', gap: 4 }}>
+            <Icon name="BookOpen" size={16} color={colors.textDim} />
+            <Text style={s.quickBtnText}>Diario</Text>
+          </View>
         </TouchableOpacity>
       </View>
 

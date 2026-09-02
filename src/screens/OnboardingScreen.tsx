@@ -109,12 +109,9 @@ export function OnboardingScreen() {
   }, []);
 
   const handleSkip = useCallback(() => {
-    Alert.alert(
-      'Saltare l\'onboarding?',
-      'Puoi riprenderlo da Impostazioni in qualsiasi momento.',
-      [{ text: 'Continua', style: 'cancel' }],
-    );
-  }, []);
+    setWasOnboarded(true);
+    navigation.replace('MainTabs');
+  }, [setWasOnboarded, navigation]);
 
   const handleDone = useCallback(async () => {
     if (isSaving) return;
