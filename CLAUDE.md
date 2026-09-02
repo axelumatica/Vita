@@ -22,8 +22,8 @@ Vita is an ADHD-friendly personal AI companion app built with Expo (React Native
 - **TTS**: expo-speech (system voices, offline)
 - **Animations**: React Native Reanimated 3 (orb animations, pulse effects)
 - **Design**: Custom token system (`src/design/tokens.ts`) — no external UI library
-- **Storage**: AsyncStorage for persistence, MMKV available but not yet wired
-- **AI**: OpenRouter API integration planned (`src/ai/`) — **not yet implemented** (pipeline.ts, lior-models.ts are referenced but do not exist yet)
+- **Storage**: AsyncStorage for persistence (encryption was dropped)
+- **AI**: OpenRouter API integration (`src/ai/`) — fully wired into LiorScreen via `chat`, `extractTasks`, `breakdownTask`
 
 ## Architecture
 
