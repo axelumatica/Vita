@@ -10,7 +10,9 @@
     "splash": {
       "image": "./assets/images/ic_launcher.svg",
       "resizeMode": "contain",
-      "backgroundColor": "#0B132B"
+      "backgroundColor": "#0B132B",
+      "imageWidth": 200,
+      "imageHeight": 200
     },
     "android": {
       "package": "com.vita.app",

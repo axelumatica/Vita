@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+      width="108"
+      height="108"
+      viewBox="0 0 108 108">
+
+    <!-- Deep blue circle — centered in the icon -->
+    <circle
+        cx="54"
+        cy="54"
+        r="28"
+        fill="#14213D" />
+
+    <!-- Small cream circle in bottom-right of blue circle -->
+    <!-- Represents: light (Lior) + presence indicator -->
+    <circle
+        cx="66"
+        cy="66"
+        r="6"
+        fill="#F4EFE7" />
+
+</svg>

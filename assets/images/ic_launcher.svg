@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+      width="1024"
+      height="1024"
+      viewBox="0 0 1024 1024">
+
+    <!-- Background: cream -->
+    <rect width="1024" height="1024" fill="#F4EFE7"/>
+
+    <!-- Deep blue circle — centered -->
+    <circle
+        cx="512"
+        cy="512"
+        r="265"
+        fill="#14213D" />
+
+    <!-- Small cream circle in bottom-right of blue circle -->
+    <!-- Represents: Lior's presence indicator -->
+    <circle
+        cx="626"
+        cy="626"
+        r="57"
+        fill="#F4EFE7" />
+
+</svg>
