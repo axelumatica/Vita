@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project: Vita
 
-Vita is an ADHD-friendly personal AI companion app built with Expo (React Native). It provides a voice-first interface with an AI assistant called "Lior" that helps users capture thoughts, extract tasks, and maintain a local encrypted vault.
+Vita is an ADHD-friendly personal AI companion app built with Expo (React Native). It provides a voice-first interface with an AI assistant called "Lior" that helps users capture thoughts, extract tasks, and maintain a local vault.
 
 ## Memory Optimization
 
@@ -89,7 +89,6 @@ npm run typecheck   # TypeScript validation (tsc --noEmit)
 
 - LiorScreen and VoiceSettingsScreen import from `src/ai/pipeline` and `src/ai/lior-models` — these files exist and implement OpenRouter integration.
 - expo-av for audio recording is installed and wired to the UI via the voice-recording service.
-- react-native-mmkv is installed for future encrypted storage upgrade (currently using AsyncStorage).
 - The `target/` directory contains Rust build artifacts — likely a legacy or parallel project; do not reference it.
 
 <!-- BEGIN ORCSPACE (managed) -->
