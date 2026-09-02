@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import { useVitaStore } from '../store/vita-store';
 import { useTheme } from '../design/ThemeProvider';
+import { Icon } from '../design/Icon';
 import {
   startRecording,
   stopRecording,
@@ -212,7 +213,10 @@ export function DiaryScreen() {
     >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.introCard}>
-          <Text style={styles.eyebrow}>📖 DIARIO</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Icon name="BookOpen" size={13} color={colors.textFaint} />
+          <Text style={styles.eyebrow}>DIARIO</Text>
+        </View>
           <Text style={styles.body}>
             Scrivi senza pensare alla forma. I tuoi pensieri esatti vanno direttamente
             nello scratchpad, pronti per essere elaborati da Lior.
@@ -221,7 +225,10 @@ export function DiaryScreen() {
 
         {isTranscribing ? (
         <View style={styles.recordingInProgress}>
-          <Text style={styles.recordingText}>🎤 Ascolto...</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Icon name="Mic" size={14} color={colors.textDim} />
+            <Text style={styles.recordingText}>Ascolto...</Text>
+          </View>
         </View>
       ) : (
         <TouchableOpacity
@@ -232,9 +239,12 @@ export function DiaryScreen() {
           onPress={handleStartRecording}
           disabled={isRecording}
         >
-          <Text style={styles.voiceBtnText}>
-            {isRecording ? '🛎 Stop' : '🎤 Voice'}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <Icon name="Mic" size={14} color={colors.textDim} />
+            <Text style={styles.voiceBtnText}>
+              {isRecording ? 'Stop' : 'Voice'}
+            </Text>
+          </View>
         </TouchableOpacity>
       )}
 
@@ -271,7 +281,7 @@ export function DiaryScreen() {
           onPress={handleAdd}
           disabled={!draft.trim()}
         >
-          <Text style={styles.addBtnText}>+</Text>
+          <Icon name="Plus" size={22} color={colors.accentInk} />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>

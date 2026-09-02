@@ -21,6 +21,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import { useTheme } from '../design/ThemeProvider';
 import { useVitaStore } from '../store/vita-store';
+import { Icon } from '../design/Icon';
 import { HomeScreen } from '../screens/HomeScreen';
 import { DiaryScreen } from '../screens/DiaryScreen';
 import { LiorScreen } from '../screens/LiorScreen';
@@ -111,6 +112,7 @@ function useTabStyles() {
 
 function VitaTabBar({ state, descriptors, navigation }: any) {
   const tabStyles = useTabStyles();
+  const { colors } = useTheme();
   return (
     <View style={tabStyles.bar}>
       {state.routes.map((route: any, index: number) => {
@@ -129,7 +131,7 @@ function VitaTabBar({ state, descriptors, navigation }: any) {
                 onPress={() => navigation.navigate(route.name)}
                 activeOpacity={0.8}
               >
-                <Text style={tabStyles.liorBtnText}>🎙</Text>
+                <Icon name="Mic" size={21} color="#F7F4EA" />
               </TouchableOpacity>
             </View>
           );
@@ -141,12 +143,12 @@ function VitaTabBar({ state, descriptors, navigation }: any) {
             style={tabStyles.tab}
             onPress={() => navigation.navigate(route.name)}
           >
-            <Text style={tabStyles.tabIcon}>
-              {route.name === 'HomeTab' && '🏠'}
-              {route.name === 'DiaryTab' && '📖'}
-              {route.name === 'TasksTab' && '⚡'}
-              {route.name === 'VaultTab' && '🗂'}
-            </Text>
+            <View style={tabStyles.tabIcon}>
+              {route.name === 'HomeTab' && <Icon name="Home" size={18} color={isFocused ? colors.text : colors.textFaint} />}
+              {route.name === 'DiaryTab' && <Icon name="BookOpen" size={18} color={isFocused ? colors.text : colors.textFaint} />}
+              {route.name === 'TasksTab' && <Icon name="Zap" size={18} color={isFocused ? colors.text : colors.textFaint} />}
+              {route.name === 'VaultTab' && <Icon name="Archive" size={18} color={isFocused ? colors.text : colors.textFaint} />}
+            </View>
             <Text
               style={[tabStyles.tabLabel, isFocused && tabStyles.tabLabelActive]}
             >

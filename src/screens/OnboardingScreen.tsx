@@ -24,6 +24,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useVitaStore } from '../store/vita-store';
 import { useTheme } from '../design/ThemeProvider';
+import { Icon } from '../design/Icon';
 
 const TOTAL_STEPS = 4;
 
@@ -152,13 +153,14 @@ export function OnboardingScreen() {
   ];
 
   const renderIcon = (name: string) => {
-    const icons: Record<string, string> = {
-      capture: '➕',
-      lior: '🔮',
-      breakdown: '📋',
-      vault: '🔒',
+    const icons: Record<string, { name: string; color: string }> = {
+      capture: { name: 'Plus', color: '#F4EFE7' },
+      lior: { name: 'Brain', color: '#F4EFE7' },
+      breakdown: { name: 'List', color: '#F4EFE7' },
+      vault: { name: 'Lock', color: '#F4EFE7' },
     };
-    return icons[name] ?? '✨';
+    const icon = icons[name] ?? { name: 'Star', color: '#F4EFE7' };
+    return <Icon name={icon.name as any} size={32} color={icon.color} />;
   };
 
   const step = steps[currentStep];
@@ -186,7 +188,7 @@ export function OnboardingScreen() {
 
       <View style={s.card}>
         <View style={s.iconWrap}>
-          <Text style={{ fontSize: 32 }}>{renderIcon(step.iconName)}</Text>
+          {renderIcon(step.iconName)}
         </View>
         <Text style={s.title}>{step.title}</Text>
         <Text style={s.body}>{step.body}</Text>

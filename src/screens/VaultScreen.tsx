@@ -17,17 +17,18 @@ import {
 } from 'react-native';
 import { useVitaStore } from '../store/vita-store';
 import { useTheme } from '../design/ThemeProvider';
+import { Icon } from '../design/Icon';
 import { clusterEntries } from '../ai';
 import type { VaultEntryType, ProjectCluster } from '../store/vita-store';
 
 type Filter = 'all' | VaultEntryType;
 
-const FILTER_LABELS: Record<Filter, string> = {
-  all: 'Tutto',
-  TASK: '⚡ Task',
-  DIARY: '📖 Diario',
-  VOICE: '🎙 Voce',
-  NOTE: '💡 Note',
+const FILTER_LABELS: Record<Filter, { icon: string; label: string }> = {
+  all: { icon: 'Archive', label: 'Tutto' },
+  TASK: { icon: 'Zap', label: 'Task' },
+  DIARY: { icon: 'BookOpen', label: 'Diario' },
+  VOICE: { icon: 'Mic', label: 'Voce' },
+  NOTE: { icon: 'Lightbulb', label: 'Note' },
 };
 
 /** Wrap StyleSheet.create so styles re-read colors when theme changes. */
@@ -188,7 +189,7 @@ export function VaultScreen() {
           style={s.search}
           value={query}
           onChangeText={setQuery}
-          placeholder="🔍 Cerca per concetto o significato…"
+          placeholder="Cerca per concetto o significato…"
           placeholderTextColor="#7c8299"
         />
       </View>
@@ -204,8 +205,13 @@ export function VaultScreen() {
               style={[s.pill, filter === f && s.pillOn]}
               onPress={() => setFilter(f)}
             >
-              <Text style={[s.pillText, filter === f && s.pillTextOn]}>
-                {FILTER_LABELS[f]} {count > 0 ? `(${count})` : ''}
+              <Icon
+                name={FILTER_LABELS[f].icon as any}
+                size={14}
+                color={filter === f ? '#F7F4EA' : '#C5BFB0'}
+              />
+              <Text style={[s.pillText, filter === f && s.pillTextOn, { marginLeft: 4 }]}>
+                {FILTER_LABELS[f].label} {count > 0 ? `(${count})` : ''}
               </Text>
             </TouchableOpacity>
           );
@@ -250,7 +256,7 @@ export function VaultScreen() {
               }}
             >
               <Text style={[s.pillText, isActive && s.pillTextOn]}>
-                📁 {cluster.clusterName}
+                {cluster.clusterName}
               </Text>
             </TouchableOpacity>
           );
@@ -261,7 +267,7 @@ export function VaultScreen() {
           disabled={isClustering}
         >
           <Text style={[s.pillText, isClustering && s.pillTextOn]}>
-            {isClustering ? '⏳...' : '🔮 Raggruppa'}
+            {isClustering ? 'Caricamento...' : 'Raggruppa'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -280,7 +286,7 @@ export function VaultScreen() {
             <View key={entry.id} style={s.card}>
               <View style={s.cardHeader}>
                 <Text style={s.cardType}>
-                  {entry.type === 'TASK' ? '⚡' : entry.type === 'DIARY' ? '📖' : '💡'}
+                  <Icon name={entry.type === 'TASK' ? 'Zap' : entry.type === 'DIARY' ? 'BookOpen' : 'Lightbulb'} size={14} color="#C5BFB0" />
                 </Text>
                 {entry.isLowConfidence && (
                   <Text style={s.lowConfBadge}>?</Text>
@@ -290,7 +296,7 @@ export function VaultScreen() {
               {entry.projectClusterId && (() => {
                 const cluster = projectClusters.find(c => c.id === entry.projectClusterId);
                 return cluster ? (
-                  <Text style={s.cardMeta}>📁 {cluster.clusterName}</Text>
+                  <Text style={s.cardMeta}>{cluster.clusterName}</Text>
                 ) : null;
               })()}
               <Text style={s.cardContent} numberOfLines={3}>

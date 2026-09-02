@@ -6,11 +6,13 @@
  * The "Fatto" button archives the focus task and clears focus.
  */
 
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Vibration } from 'react-native';
 import { useVitaStore } from '../store/vita-store';
 import { breakdownTask } from '../ai';
 import { useTheme } from '../design/ThemeProvider';
+import { Icon } from '../design/Icon';
+import * as Haptics from 'expo-haptics';
 
 /** Wrap StyleSheet.create so styles re-read colors when theme changes. */
 function useThemedStyles() {
@@ -109,6 +111,28 @@ function useThemedStyles() {
     },
     hint: { marginTop: 20, paddingHorizontal: 4 },
     hintText: { color: colors.textFaint, fontSize: 12, fontStyle: 'italic', textAlign: 'center', lineHeight: 18 },
+    timerDisplay: { alignItems: 'center', marginTop: 16 },
+    timerText: { color: colors.text, fontSize: 48, fontWeight: '300', fontFamily: 'monospace', letterSpacing: 2 },
+    timerTextDone: { color: colors.amber },
+    timerDoneText: { color: colors.amber, fontSize: 13, marginTop: 4, fontWeight: '600' },
+    timerActions: { flexDirection: 'row', gap: 10, marginTop: 12 },
+    startTimerBtn: {
+      backgroundColor: colors.accent,
+      borderRadius: radius.md,
+      paddingVertical: 14,
+      alignItems: 'center',
+      marginTop: 12,
+    },
+    startTimerText: { color: colors.accentInk, fontSize: 15, fontWeight: '700' },
+    addTimeBtn: {
+      backgroundColor: colors.surface2,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.sm,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+    },
+    addTimeText: { color: colors.textDim, fontSize: 13, fontWeight: '600' },
   });
 }
 
@@ -153,6 +177,8 @@ export function TasksScreen() {
     try {
       const steps = await breakdownTask(focusTask.title, openRouterApiKey);
       addTaskSteps(focusTask.id, steps);
+      // Reset timer when breakdown completes
+      resetTimer();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Errore sconosciuto';
       setBreakdownError(msg);
@@ -162,10 +188,103 @@ export function TasksScreen() {
     }
   }, [focusTask, openRouterApiKey, addTaskSteps]);
 
+  // ── 2-min timer state ─────────────────────────────────────────────
+  const [timerSecondsLeft, setTimerSecondsLeft] = useState(120); // 2 min in seconds
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [timerCompleted, setTimerCompleted] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function resetTimer() {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    setTimerSecondsLeft(120);
+    setTimerCompleted(false);
+    setIsTimerRunning(false);
+  }
+
+  function startTimer() {
+    if (isTimerRunning) return;
+    setTimerSecondsLeft(120);
+    setTimerCompleted(false);
+    setIsTimerRunning(true);
+
+    timerRef.current = setInterval(async () => {
+      setTimerSecondsLeft((prev) => {
+        if (prev <= 1) {
+          // Timer complete
+          clearInterval(timerRef.current!);
+          timerRef.current = null;
+          setIsTimerRunning(false);
+          setTimerCompleted(true);
+          triggerCompletionFeedback();
+          return 0;
+        }
+        // Haptic tick every 30 seconds
+        if (prev % 30 === 0 && prev < 120) {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }
+
+  function addTwoMinutes() {
+    setTimerSecondsLeft((prev) => prev + 120);
+    if (!isTimerRunning) {
+      setIsTimerRunning(true);
+      timerRef.current = setInterval(async () => {
+        setTimerSecondsLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current!);
+            timerRef.current = null;
+            setIsTimerRunning(false);
+            setTimerCompleted(true);
+            triggerCompletionFeedback();
+            return 0;
+          }
+          if (prev % 30 === 0 && prev < 120) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+  }
+
+  async function triggerCompletionFeedback() {
+    try {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } catch {
+      // Ignore
+    }
+    try {
+      Vibration.vibrate([0, 200, 100, 200]);
+    } catch {
+      // Ignore
+    }
+  }
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
   const handleStartTimer = useCallback(() => {
     if (!focusTask) return;
-    Alert.alert('Timer 2 min', `Avvio timer per: "${focusTask.title}"\n(Integrazione timer da completare)`);
+    startTimer();
   }, [focusTask]);
+
+  const handleResetTimer = useCallback(() => {
+    resetTimer();
+  }, []);
+
+  const handleAddTwoMin = useCallback(() => {
+    addTwoMinutes();
+  }, []);
 
   const completedSteps = focusSteps.filter((s) => s.isCompleted).length;
 
@@ -173,7 +292,10 @@ export function TasksScreen() {
     <ScrollView style={s.container} contentContainerStyle={s.content}>
       {/* ── Focus card ─────────────────────────────────────── */}
       <View style={s.focusCard}>
-        <Text style={s.eyebrow}>🎯 FOCUS UNICO</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Icon name="Target" size={13} color="#C5BFB0" />
+          <Text style={s.eyebrow}>FOCUS UNICO</Text>
+        </View>
         {focusTask ? (
           <>
             <Text style={s.focusText}>{focusTask.title}</Text>
@@ -199,12 +321,43 @@ export function TasksScreen() {
                 onPress={handleBreakdown}
                 disabled={isBreakingDown}
               >
-                <Text style={s.actionText}>{isBreakingDown ? '...' : '🔬 Riduci'}</Text>
+                <Text style={s.actionText}>{isBreakingDown ? '...' : 'Riduci'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={s.actionBtn} onPress={handleStartTimer}>
-                <Text style={s.actionText}>⏱ 2 min</Text>
+              <TouchableOpacity style={s.actionBtn} onPress={handleResetTimer}>
+                <Icon name="RotateCcw" size={14} color="#6B7280" />
+                <Text style={[s.actionText, { marginLeft: 4 }]}>Reset</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Timer display */}
+            {isTimerRunning || timerCompleted ? (
+              <View style={s.timerDisplay}>
+                <Text style={[s.timerText, timerCompleted && s.timerTextDone]}>
+                  {`${Math.floor(timerSecondsLeft / 60)}:${String(timerSecondsLeft % 60).padStart(2, '0')}`}
+                </Text>
+                {timerCompleted && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Icon name="Clock" size={14} color="#F59E0B" />
+                    <Text style={[s.timerDoneText, { marginLeft: 4 }]}>Tempo scaduto!</Text>
+                  </View>
+                )}
+                <View style={s.timerActions}>
+                  <TouchableOpacity style={s.addTimeBtn} onPress={handleAddTwoMin}>
+                    <Text style={s.addTimeText}>+ 2 min</Text>
+                  </TouchableOpacity>
+                  {timerCompleted && (
+                    <TouchableOpacity style={s.addTimeBtn} onPress={handleResetTimer}>
+                      <Text style={s.addTimeText}>Reset</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            ) : (
+              <TouchableOpacity style={s.startTimerBtn} onPress={handleStartTimer}>
+                <Icon name="Play" size={16} color="#0B132B" />
+                <Text style={[s.startTimerText, { marginLeft: 6 }]}>Avvia timer 2 min</Text>
+              </TouchableOpacity>
+            )}
             {breakdownError && <Text style={s.errorText}>{breakdownError}</Text>}
           </>
         ) : (
@@ -217,9 +370,12 @@ export function TasksScreen() {
       {/* ── Done button ────────────────────────────────────── */}
       {focusTask && (
         <TouchableOpacity style={s.primaryBtn} onPress={handleDone}>
-          <Text style={s.primaryBtnText}>
-            ✓ Fatto{completedSteps > 0 ? ` (${completedSteps}/${focusSteps.length} micro-step)` : ''}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <Icon name="Check" size={16} color="#0B132B" />
+              <Text style={s.primaryBtnText}>
+                Fatto{completedSteps > 0 ? ` (${completedSteps}/${focusSteps.length} micro-step)` : ''}
+              </Text>
+            </View>
         </TouchableOpacity>
       )}
 
@@ -231,7 +387,8 @@ export function TasksScreen() {
             onPress={() => setShowBacklog((v) => !v)}
           >
             <Text style={s.accordionTitle}>
-              {showBacklog ? '▾' : '▸'} BACKLOG ({backlog.length})
+              <Icon name={showBacklog ? 'ChevronDown' : 'ChevronRight'} size={14} color="#C5BFB0" />
+              <Text style={{ marginLeft: 4 }}>BACKLOG ({backlog.length})</Text>
             </Text>
           </TouchableOpacity>
           {showBacklog && backlog.map((task) => (

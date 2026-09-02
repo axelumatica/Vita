@@ -28,6 +28,8 @@ import {
   Platform,
 } from 'react-native';
 import { useVitaStore } from '../store/vita-store';
+import { useTheme } from '../design/ThemeProvider';
+import { Icon } from '../design/Icon';
 import {
   LIOR_MODELS,
   PROCESSING_DISCLOSURE,
@@ -46,6 +48,7 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function VoiceSettingsScreen() {
+  const { colors } = useTheme();
   const apiKey = useVitaStore((s) => s.openRouterApiKey);
   const setApiKey = useVitaStore((s) => s.setOpenRouterApiKey);
   const clearApiKey = useVitaStore((s) => s.clearOpenRouterApiKey);
@@ -391,9 +394,10 @@ export function VoiceSettingsScreen() {
             style={styles.previewButton}
             onPress={handlePreview}
           >
-            <Text style={styles.previewButtonText}>
-              🔊 Ascolta anteprima
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <Icon name="Volume2" size={16} color={colors.accentInk} />
+              <Text style={styles.previewButtonText}>Ascolta anteprima</Text>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -479,18 +483,24 @@ export function VoiceSettingsScreen() {
             onPress={handleExport}
             disabled={isExporting}
           >
-            <Text style={styles.buttonPrimaryText}>
-              {isExporting ? 'Esportazione…' : '📤 Esporta vault'}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <Icon name="ArrowUp" size={16} color={colors.accentInk} />
+              <Text style={styles.buttonPrimaryText}>
+                {isExporting ? 'Esportazione…' : 'Esporta vault'}
+              </Text>
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.button, { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#2A385B', marginTop: 12 }]}
             onPress={() => setShowImport(!showImport)}
           >
-            <Text style={styles.buttonPrimaryText}>
-              {showImport ? '🔼 Chiudi' : '📥 Importa backup'}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <Icon name={showImport ? 'ChevronUp' : 'ArrowDown'} size={16} color={colors.accentInk} />
+              <Text style={styles.buttonPrimaryText}>
+                {showImport ? 'Chiudi' : 'Importa backup'}
+              </Text>
+            </View>
           </TouchableOpacity>
 
           {showImport && (
@@ -554,7 +564,10 @@ export function VoiceSettingsScreen() {
               );
             }}
           >
-            <Text style={styles.resetOnboardingBtnText}>🔁 Riavvia onboarding</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <Icon name="RotateCcw" size={14} color={colors.textDim} />
+            <Text style={styles.resetOnboardingBtnText}>Riavvia onboarding</Text>
+          </View>
           </TouchableOpacity>
         </View>
       </ScrollView>

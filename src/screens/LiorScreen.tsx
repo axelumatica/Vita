@@ -179,7 +179,7 @@ export function LiorScreen() {
     }
     if (!requireKey()) return;
 
-    pushMessage('lior', '🧠 …');
+    pushMessage('lior', '…');
     setIsLoading(true);
     try {
       const reply = await liorHelpMeThink(lastUser.text, apiKey);
@@ -207,7 +207,7 @@ export function LiorScreen() {
     }
     if (!requireKey()) return;
 
-    pushMessage('lior', '🎯 Estraggo…');
+    pushMessage('lior', 'Estraggo…');
     setIsLoading(true);
     try {
       const result: ExtractionResult = await extractTasks(lastUser.text, apiKey);
@@ -238,12 +238,12 @@ export function LiorScreen() {
           });
         }
         if (diaryItems.length > 0) {
-          reply += `\n📖 Riflessioni (${diaryItems.length}):\n`;
+          reply += `\nRiflessioni (${diaryItems.length}):\n`;
           diaryItems.forEach((item) => {
             reply += `  · ${item.title}\n`;
           });
         }
-        reply += '\n\n👆 Tocca "Conferma" per salvare nel Vault.';
+        reply += '\n\nTocca "Conferma" per salvare nel Vault.';
         pushMessage('lior', reply.trim());
         speakReply(reply.trim());
       }
@@ -269,7 +269,7 @@ export function LiorScreen() {
     }
     if (!requireKey()) return;
 
-    pushMessage('lior', '🔍 …');
+    pushMessage('lior', '…');
     setIsLoading(true);
     try {
       const reply = await liorRereadDump(dump, apiKey);
