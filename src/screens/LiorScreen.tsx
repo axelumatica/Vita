@@ -84,6 +84,8 @@ interface ScratchpadMessage {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function LiorScreen() {
+  const s = useThemedStyles();
+  const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const apiKey = useVitaStore((s) => s.openRouterApiKey);
   const addEntry = useVitaStore((s) => s.addEntry);
@@ -413,27 +415,27 @@ export function LiorScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={s.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       {/* ── Top bar ─────────────────────────────────────────────── */}
-      <View style={styles.topBar}>
-        <Text style={styles.processingBadge}>{PROCESSING_DISCLOSURE}</Text>
-        <View style={styles.topBarRight}>
-          <TouchableOpacity onPress={handleClear} style={styles.clearBtn}>
-            <Text style={styles.clearBtnText}>Svuota</Text>
+      <View style={s.topBar}>
+        <Text style={s.processingBadge}>{PROCESSING_DISCLOSURE}</Text>
+        <View style={s.topBarRight}>
+          <TouchableOpacity onPress={handleClear} style={s.clearBtn}>
+            <Text style={s.clearBtnText}>Svuota</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => navigation.navigate('Settings')}
-            style={styles.settingsBtn}
+            style={s.settingsBtn}
           >
-            <Icon name="Settings" size={16} color="#C5BFB0" />
+            <Icon name="Settings" size={16} color={s.processingBadge.color} />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* ── Orb + status ───────────────────────────────────────── */}
-      <View style={styles.presenceArea}>
+      <View style={s.presenceArea}>
         <LiorOrb
           state={
             overloadMode
@@ -462,13 +464,13 @@ export function LiorScreen() {
 
       {/* ── Live Scratchpad ────────────────────────────────────── */}
       <ScrollView
-        style={styles.scratchpad}
-        contentContainerStyle={styles.scratchpadContent}
+        style={s.scratchpad}
+        contentContainerStyle={s.scratchpadContent}
         keyboardShouldPersistTaps="handled"
       >
         {messages.length === 0 && !isLoading && (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyHint}>
+          <View style={s.emptyState}>
+            <Text style={s.emptyHint}>
               Scrivete qualcosa e premete Invio, oppure usate i pulsanti qui sotto.
             </Text>
           </View>
@@ -477,14 +479,14 @@ export function LiorScreen() {
           <View
             key={msg.id}
             style={[
-              styles.msgBubble,
-              msg.role === 'user' ? styles.msgUser : styles.msgLior,
+              s.msgBubble,
+              msg.role === 'user' ? s.msgUser : s.msgLior,
             ]}
           >
             <Text
               style={[
-                styles.msgText,
-                msg.role === 'user' ? styles.msgTextUser : styles.msgTextLior,
+                s.msgText,
+                msg.role === 'user' ? s.msgTextUser : s.msgTextLior,
               ]}
             >
               {msg.text}
@@ -494,103 +496,101 @@ export function LiorScreen() {
       </ScrollView>
 
       {/* ── Shortcut buttons ──────────────────────────────────── */}
-      <View style={styles.shortcuts}>
+      <View style={s.shortcuts}>
         <TouchableOpacity
-          style={styles.shortcutBtn}
+          style={s.shortcutBtn}
           onPress={handleHelpMeThink}
           disabled={isLoading}
         >
-          <Icon name="Brain" size={16} color="#C5BFB0" />
-          <Text style={[styles.shortcutText, { marginLeft: 4 }]}>Aiutami a pensare</Text>
+          <Icon name="Brain" size={16} color={colors.textDim} />
+          <Text style={[s.shortcutText, { marginLeft: 4 }]}>Aiutami a pensare</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.shortcutBtn}
+          style={s.shortcutBtn}
           onPress={handleExtract}
           disabled={isLoading}
         >
-          <Icon name="Target" size={16} color="#C5BFB0" />
-          <Text style={[styles.shortcutText, { marginLeft: 4 }]}>Estrai 1 task</Text>
+          <Icon name="Target" size={16} color={colors.textDim} />
+          <Text style={[s.shortcutText, { marginLeft: 4 }]}>Estrai 1 task</Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.shortcuts}>
+      <View style={s.shortcuts}>
         <TouchableOpacity
-          style={styles.shortcutBtn}
+          style={s.shortcutBtn}
           onPress={handleRereadDump}
           disabled={isLoading}
         >
-          <Icon name="Search" size={16} color="#C5BFB0" />
-          <Text style={[styles.shortcutText, { marginLeft: 4 }]}>Rileggi il dump</Text>
+          <Icon name="Search" size={16} color={colors.textDim} />
+          <Text style={[s.shortcutText, { marginLeft: 4 }]}>Rileggi il dump</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.shortcutBtn}
+          style={s.shortcutBtn}
           onPress={handleFreezeEverything}
           disabled={isLoading}
         >
-          <Icon name="OctagonAlert" size={16} color="#C5BFB0" />
-          <Text style={[styles.shortcutText, { marginLeft: 4 }]}>Ferma tutto</Text>
+          <Icon name="OctagonAlert" size={16} color={colors.textDim} />
+          <Text style={[s.shortcutText, { marginLeft: 4 }]}>Ferma tutto</Text>
         </TouchableOpacity>
       </View>
       {/* ── Voice recording button ──────────────────────── */}
       {isTranscribing ? (
-        <View style={styles.recordingInProgress}>
-          <Icon name="Mic" size={16} color="#F7F4EA" />
-          <Text style={[styles.recordingText, { marginLeft: 4 }]}>Ascolto...</Text>
+        <View style={s.recordingInProgress}>
+          <Icon name="Mic" size={16} color={colors.accent} />
+          <Text style={[s.recordingText, { marginLeft: 4 }]}>Ascolto...</Text>
         </View>
       ) : (
         <TouchableOpacity
           style={[
-            styles.shortcutBtn,
-            isRecording && styles.shortcutBtnRecordingActive,
+            s.shortcutBtn,
+            isRecording && s.shortcutBtnRecordingActive,
           ]}
           onPress={handleStartRecording}
           disabled={isLoading}
         >
-          <Text style={styles.shortcutText}>
-            <Icon name="Mic" size={16} color={isRecording ? '#F7F4EA' : '#C5BFB0'} />
-          <Text style={[styles.shortcutText, { marginLeft: 4 }]}>{isRecording ? 'Stop' : 'Voice'}</Text>
-          </Text>
+          <Icon name="Mic" size={16} color={isRecording ? colors.accent : colors.textDim} />
+          <Text style={[s.shortcutText, { marginLeft: 4 }]}>{isRecording ? 'Stop' : 'Voice'}</Text>
         </TouchableOpacity>
       )}
 
       {/* ── Confirm extracted items ───────────────────────────── */}
       {lastExtraction && lastExtraction.items.length > 0 && (
-        <View style={styles.confirmRow}>
-          <Text style={styles.confirmLabel}>
+        <View style={s.confirmRow}>
+          <Text style={s.confirmLabel}>
             {lastExtraction.items.filter((i) => !i.isDiary).length} task +{' '}
             {lastExtraction.items.filter((i) => i.isDiary).length} riflessioni
           </Text>
           <TouchableOpacity
-            style={styles.confirmBtn}
+            style={s.confirmBtn}
             onPress={handleConfirmAll}
             disabled={isLoading}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Icon name="Check" size={16} color="#0B132B" />
-                    <Text style={[styles.confirmBtnText, { marginLeft: 4 }]}>Conferma</Text>
+                    <Icon name="Check" size={16} color={colors.accentInk} />
+                    <Text style={[s.confirmBtnText, { marginLeft: 4 }]}>Conferma</Text>
                   </View>
           </TouchableOpacity>
         </View>
       )}
 
       {/* ── Input + Send ──────────────────────────────────────── */}
-      <View style={styles.inputRow}>
+      <View style={s.inputRow}>
         <TextInput
-          style={styles.input}
+          style={s.input}
           value={input}
           onChangeText={setInput}
           placeholder="Scrivi a Lior…"
-          placeholderTextColor="#7c8299"
+          placeholderTextColor={colors.textFaint}
           multiline={false}
           returnKeyType="send"
           onSubmitEditing={handleSend}
           editable={!isLoading}
         />
         <TouchableOpacity
-          style={[styles.sendBtn, !input.trim() && styles.sendBtnDisabled]}
+          style={[s.sendBtn, !input.trim() && s.sendBtnDisabled]}
           onPress={handleSend}
           disabled={!input.trim() || isLoading}
         >
-          <Icon name="ArrowUp" size={20} color="#0B132B" />
+          <Icon name="ArrowUp" size={20} color={colors.accentInk} />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -598,219 +598,201 @@ export function LiorScreen() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Styles (Night Vault palette — design tokens to be restored)
+//  Theme-aware styles
 // ─────────────────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0B132B',
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  processingBadge: {
-    color: '#C5BFB0',
-    fontSize: 11,
-    fontFamily: 'monospace',
-    letterSpacing: 0.05,
-  },
-  clearBtn: {
-    padding: 4,
-  },
-  clearBtnText: {
-    color: '#7c8299',
-    fontSize: 12,
-    fontFamily: 'monospace',
-  },
-  topBarRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  settingsBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: '#1C2541',
-    borderWidth: 1,
-    borderColor: '#2A385B',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  settingsBtnText: {
-    color: '#C5BFB0',
-    fontSize: 14,
-  },
-  presenceArea: {
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  orbTapWrap: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statusText: {
-    color: '#C5BFB0',
-    fontSize: 14,
-    fontStyle: 'italic',
-    marginTop: 12,
-    textAlign: 'center',
-  },
-  scratchpad: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  scratchpadContent: {
-    paddingBottom: 16,
-  },
-  emptyState: {
-    paddingVertical: 32,
-    alignItems: 'center',
-  },
-  emptyHint: {
-    color: '#7c8299',
-    fontSize: 13,
-    textAlign: 'center',
-    lineHeight: 1.5,
-  },
-  msgBubble: {
-    maxWidth: '85%',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 16,
-    marginBottom: 8,
-  },
-  msgUser: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#1C2541',
-    borderBottomRightRadius: 4,
-  },
-  msgLior: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#161d38',
-    borderBottomLeftRadius: 4,
-    borderWidth: 1,
-    borderColor: '#2A385B',
-  },
-  msgText: {
-    fontSize: 14,
-    lineHeight: 1.5,
-  },
-  msgTextUser: {
-    color: '#F7F4EA',
-  },
-  msgTextLior: {
-    color: '#C5BFB0',
-  },
-  shortcuts: {
-    flexDirection: 'row',
-    paddingHorizontal: 12,
-    gap: 8,
-    marginBottom: 6,
-  },
-  shortcutBtn: {
-    flex: 1,
-    backgroundColor: '#1C2541',
-    borderWidth: 1,
-    borderColor: '#2A385B',
-    borderRadius: 10,
-    paddingVertical: 8,
-    alignItems: 'center',
-  },
-  shortcutText: {
-    color: '#C5BFB0',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  shortcutBtnRecordingActive: {
-    borderColor: '#F7F4EA',
-    backgroundColor: '#F7F4EA',
-  },
-  recordingInProgress: {
-    padding: 12,
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  recordingText: {
-    color: '#C5BFB0',
-    fontSize: 12,
-  },
-  confirmRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginHorizontal: 12,
-    marginBottom: 6,
-    backgroundColor: '#161d38',
-    borderWidth: 1,
-    borderColor: '#F7F4EA',
-    borderRadius: 12,
-  },
-  confirmLabel: {
-    color: '#C5BFB0',
-    fontSize: 12,
-    fontWeight: '600',
-    flex: 1,
-    paddingHorizontal: 8,
-  },
-  confirmBtn: {
-    backgroundColor: '#F7F4EA',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 10,
-  },
-  confirmBtnText: {
-    color: '#0B132B',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#1C2541',
-  },
-  input: {
-    flex: 1,
-    backgroundColor: '#1C2541',
-    borderWidth: 1,
-    borderColor: '#2A385B',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    color: '#F7F4EA',
-    fontSize: 14,
-  },
-  sendBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#F7F4EA',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendBtnDisabled: {
-    opacity: 0.4,
-  },
-  sendBtnText: {
-    color: '#0B132B',
-    fontSize: 20,
-    fontWeight: '700',
-  },
-});
+function useThemedStyles() {
+  const { colors, radius, fontSize, spacing } = useTheme();
+  const lowStimulus = useVitaStore((s) => s.lowStimulus);
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: lowStimulus ? colors.surface : colors.bg,
+    },
+    topBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.md,
+      paddingBottom: spacing.xs,
+    },
+    processingBadge: {
+      color: lowStimulus ? colors.textFaint : colors.textDim,
+      fontSize: fontSize.mono,
+      fontFamily: 'monospace',
+      letterSpacing: 0.5,
+    },
+    clearBtn: {
+      padding: 4,
+    },
+    clearBtnText: {
+      color: colors.textFaint,
+      fontSize: 12,
+      fontFamily: 'monospace',
+    },
+    topBarRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
+    settingsBtn: {
+      width: 28,
+      height: 28,
+      borderRadius: 8,
+      backgroundColor: lowStimulus ? colors.bg : colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    presenceArea: {
+      alignItems: 'center',
+      paddingVertical: spacing.md,
+    },
+    scratchpad: {
+      flex: 1,
+      paddingHorizontal: spacing.md,
+    },
+    scratchpadContent: {
+      paddingBottom: spacing.md,
+    },
+    emptyState: {
+      paddingVertical: 32,
+      alignItems: 'center',
+    },
+    emptyHint: {
+      color: colors.textFaint,
+      fontSize: fontSize.bodySm,
+      textAlign: 'center',
+      lineHeight: 1.5 * fontSize.bodySm,
+    },
+    msgBubble: {
+      maxWidth: '85%',
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderRadius: radius.md,
+      marginBottom: spacing.xs,
+    },
+    msgUser: {
+      alignSelf: 'flex-end',
+      backgroundColor: colors.surface,
+      borderBottomRightRadius: radius.sm,
+    },
+    msgLior: {
+      alignSelf: 'flex-start',
+      backgroundColor: colors.surface2,
+      borderBottomLeftRadius: radius.sm,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    msgText: {
+      fontSize: fontSize.body,
+      lineHeight: 1.5 * fontSize.body,
+    },
+    msgTextUser: {
+      color: colors.text,
+    },
+    msgTextLior: {
+      color: colors.textDim,
+    },
+    shortcuts: {
+      flexDirection: 'row',
+      paddingHorizontal: spacing.xs,
+      gap: spacing.xs,
+      marginBottom: 6,
+    },
+    shortcutBtn: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.sm,
+      paddingVertical: 8,
+      alignItems: 'center',
+    },
+    shortcutText: {
+      color: colors.textDim,
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    shortcutBtnRecordingActive: {
+      borderColor: colors.accent,
+      backgroundColor: colors.accent,
+    },
+    shortcutTextActive: {
+      color: colors.accentInk,
+    },
+    recordingInProgress: {
+      padding: spacing.sm,
+      alignItems: 'center',
+      marginBottom: 6,
+    },
+    recordingText: {
+      color: colors.textDim,
+      fontSize: 12,
+    },
+    confirmRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.xs,
+      paddingVertical: 8,
+      marginHorizontal: spacing.xs,
+      marginBottom: 6,
+      backgroundColor: colors.surface2,
+      borderWidth: 1,
+      borderColor: colors.accent,
+      borderRadius: radius.md,
+    },
+    confirmLabel: {
+      color: colors.textDim,
+      fontSize: 12,
+      fontWeight: '600',
+      flex: 1,
+      paddingHorizontal: 8,
+    },
+    confirmBtn: {
+      backgroundColor: colors.accent,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: radius.sm,
+    },
+    confirmBtnText: {
+      color: colors.accentInk,
+      fontSize: 13,
+      fontWeight: '700',
+    },
+    inputRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      gap: spacing.sm,
+      borderTopWidth: 1,
+      borderTopColor: colors.surface,
+    },
+    input: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      color: colors.text,
+      fontSize: fontSize.body,
+    },
+    sendBtn: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    sendBtnDisabled: {
+      opacity: 0.4,
+    },
+  });
+}

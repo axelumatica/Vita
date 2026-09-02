@@ -15,7 +15,7 @@
  * here. The key is read by the LiorScreen / pipeline call sites.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -49,15 +49,415 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function VoiceSettingsScreen() {
-  const { colors } = useTheme();
+  const { colors, radius, spacing, font, fontSize, lineHeight, motion, mode } = useTheme();
   const apiKey = useVitaStore((s) => s.openRouterApiKey);
   const setApiKey = useVitaStore((s) => s.setOpenRouterApiKey);
   const clearApiKey = useVitaStore((s) => s.clearOpenRouterApiKey);
   const modelSelection = useVitaStore((s) => s.modelSelection);
   const setModelFor = useVitaStore((s) => s.setModelFor);
+  const themeMode = useVitaStore((s) => s.themeMode);
+  const setThemeMode = useVitaStore((s) => s.setThemeMode);
 
   const [draftKey, setDraftKey] = useState(apiKey);
   const [showKey, setShowKey] = useState(false);
+
+  // Precompute styles using theme tokens
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.bg,
+    },
+    scroll: {
+      padding: spacing.md,
+      paddingBottom: spacing.lg,
+    },
+    title: {
+      color: colors.text,
+      fontSize: fontSize.h1,
+      fontWeight: '700',
+      marginBottom: spacing.xs,
+    },
+    subtitle: {
+      color: colors.textFaint,
+      fontSize: fontSize.monoSm,
+      fontFamily: font.mono,
+      marginBottom: spacing.xxxl,
+    },
+    section: {
+      marginBottom: spacing.xxxl,
+    },
+    sectionLabel: {
+      color: colors.textDim,
+      fontSize: fontSize.bodySm,
+      fontWeight: '600',
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+      marginBottom: spacing.sm,
+    },
+    keyRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderWidth: 1,
+      borderRadius: radius.md,
+      paddingHorizontal: spacing.sm,
+    },
+    keyInput: {
+      flex: 1,
+      color: colors.text,
+      fontSize: fontSize.body,
+      fontFamily: font.mono,
+      paddingVertical: spacing.md,
+    },
+    eyeButton: {
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.md,
+    },
+    eyeButtonText: {
+      color: colors.textDim,
+      fontSize: fontSize.bodySm,
+      fontWeight: '600',
+    },
+    statusRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: spacing.sm,
+    },
+    statusDot: {
+      width: spacing.xs,
+      height: spacing.xs,
+      borderRadius: spacing.xs / 2,
+      backgroundColor: colors.textFaint,
+      marginRight: spacing.xs,
+    },
+    statusDotOn: {
+      backgroundColor: colors.success,
+    },
+    statusText: {
+      color: colors.textDim,
+      fontSize: fontSize.bodySm,
+    },
+    buttonRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      marginTop: spacing.md,
+    },
+    button: {
+      flex: 1,
+      paddingVertical: spacing.md,
+      borderRadius: radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    buttonPrimary: {
+      backgroundColor: colors.surface,
+    },
+    buttonPrimaryText: {
+      color: colors.text,
+      fontWeight: '700',
+      fontSize: fontSize.bodySm,
+    },
+    buttonDanger: {
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    buttonDangerText: {
+      color: colors.textDim,
+      fontWeight: '600',
+      fontSize: fontSize.bodySm,
+    },
+    buttonDisabled: {
+      opacity: 0.4,
+    },
+    optionRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderWidth: 1,
+      borderRadius: radius.md,
+      padding: spacing.sm,
+      marginBottom: spacing.xs,
+    },
+    optionRowSelected: {
+      borderColor: colors.text,
+      backgroundColor: colors.surface2,
+    },
+    radio: {
+      width: spacing.md,
+      height: spacing.md,
+      borderRadius: spacing.md / 2,
+      borderWidth: 2,
+      borderColor: colors.border,
+      marginRight: spacing.sm,
+      marginTop: spacing.xs,
+    },
+    radioSelected: {
+      borderColor: colors.text,
+      backgroundColor: colors.text,
+    },
+    optionBody: {
+      flex: 1,
+    },
+    optionLabel: {
+      color: colors.textDim,
+      fontSize: fontSize.body,
+      fontWeight: '600',
+      marginBottom: spacing.xs,
+    },
+    optionLabelSelected: {
+      color: colors.text,
+    },
+    optionWhy: {
+      color: colors.textFaint,
+      fontSize: fontSize.mono,
+      lineHeight: lineHeight.body,
+    },
+    hint: {
+      color: colors.textFaint,
+      fontSize: fontSize.mono,
+      lineHeight: 1.6,
+      marginTop: spacing.xs,
+    },
+    genderRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      marginBottom: spacing.sm,
+    },
+    genderOption: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderWidth: 1,
+      borderRadius: radius.md,
+      paddingVertical: spacing.md,
+      alignItems: 'center',
+    },
+    genderOptionActive: {
+      borderColor: colors.text,
+      backgroundColor: colors.surface2,
+    },
+    genderLabel: {
+      color: colors.textDim,
+      fontSize: fontSize.body,
+      fontWeight: '600',
+    },
+    genderLabelActive: {
+      color: colors.text,
+    },
+    moodRow: {
+      flexDirection: 'row',
+      gap: spacing.xs,
+      marginBottom: spacing.md,
+    },
+    moodOption: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderWidth: 1,
+      borderRadius: radius.md,
+      paddingVertical: spacing.sm,
+      alignItems: 'center',
+    },
+    moodOptionActive: {
+      borderColor: colors.text,
+      backgroundColor: colors.surface2,
+    },
+    moodLabel: {
+      color: colors.textDim,
+      fontSize: fontSize.bodySm,
+      fontWeight: '600',
+    },
+    moodLabelActive: {
+      color: colors.text,
+    },
+    previewButton: {
+      backgroundColor: colors.surface2,
+      borderColor: colors.text,
+      borderWidth: 1,
+      borderRadius: radius.md,
+      paddingVertical: spacing.md,
+      alignItems: 'center',
+    },
+    previewButtonText: {
+      color: colors.text,
+      fontSize: fontSize.bodySm,
+      fontWeight: '600',
+    },
+    unlockButton: {
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderStyle: 'dashed',
+      borderRadius: radius.md,
+      paddingVertical: spacing.md,
+      alignItems: 'center',
+    },
+    unlockButtonText: {
+      color: colors.textFaint,
+      fontSize: fontSize.bodySm,
+      fontStyle: 'italic',
+    },
+    customPromptInput: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderWidth: 1,
+      borderRadius: radius.md,
+      color: colors.text,
+      fontSize: fontSize.body,
+      padding: spacing.sm,
+      minHeight: spacing.lg,
+      textAlignVertical: 'top',
+      marginBottom: spacing.sm,
+    },
+    toggleRow: {
+      flexDirection: 'row',
+      marginBottom: spacing.sm,
+    },
+    toggleOption: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderWidth: 1,
+      borderRadius: radius.md,
+      paddingVertical: spacing.md,
+      alignItems: 'center',
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: spacing.xs,
+    },
+    toggleOptionActive: {
+      borderColor: colors.text,
+      backgroundColor: colors.surface2,
+    },
+    toggleDot: {
+      width: spacing.sm,
+      height: spacing.sm,
+      borderRadius: spacing.sm / 2,
+      backgroundColor: colors.textFaint,
+    },
+    toggleLabel: {
+      color: colors.textDim,
+      fontSize: fontSize.body,
+      fontWeight: '600',
+    },
+    voiceProfileSection: {
+      marginBottom: spacing.md,
+    },
+    voiceProfileSectionLabel: {
+      color: colors.textFaint,
+      fontSize: fontSize.monoSm,
+      fontFamily: font.mono,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+      marginBottom: spacing.xs,
+    },
+    voiceProfileGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.sm,
+    },
+    voiceProfileOption: {
+      width: '48%',
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderWidth: 1,
+      borderRadius: radius.md,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.sm,
+    },
+    voiceProfileOptionSelected: {
+      borderColor: colors.text,
+      backgroundColor: colors.surface2,
+    },
+    voiceProfileCardLabelSelected: {
+      color: colors.text,
+    },
+    voiceProfileName: {
+      color: colors.textFaint,
+      fontSize: fontSize.monoSm,
+      fontFamily: font.mono,
+      marginTop: spacing.xs,
+    },
+    voiceProfileCardLabel: {
+      color: colors.textDim,
+      fontSize: fontSize.bodySm,
+      fontWeight: '600',
+    },
+    toggleHint: {
+      color: colors.textFaint,
+      fontSize: fontSize.mono,
+      lineHeight: 1.6,
+      marginTop: spacing.xs,
+    },
+    onboardingScroll: {
+      flex: 1,
+      justifyContent: 'center',
+      padding: spacing.lg,
+    },
+    resetOnboardingBtn: {
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      paddingVertical: spacing.md,
+      paddingHorizontal: spacing.lg,
+      alignItems: 'center',
+      marginTop: spacing.sm,
+    },
+    resetOnboardingBtnText: {
+      color: colors.textFaint,
+      fontSize: fontSize.bodySm,
+      fontWeight: '600',
+    },
+    onboardingCard: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderWidth: 1,
+      borderRadius: radius.lg,
+      padding: spacing.xl,
+    },
+    onboardingTitle: {
+      color: colors.text,
+      fontSize: fontSize.h2,
+      fontWeight: '700',
+      marginBottom: spacing.sm,
+    },
+    onboardingSubtitle: {
+      color: colors.textDim,
+      fontSize: fontSize.body,
+      lineHeight: 20,
+      marginBottom: spacing.lg,
+    },
+    onboardingPoint: {
+      marginBottom: spacing.md,
+    },
+    onboardingPointTitle: {
+      color: colors.text,
+      fontSize: fontSize.title,
+      fontWeight: '600',
+      marginBottom: spacing.xs,
+    },
+    onboardingPointText: {
+      color: colors.textDim,
+      fontSize: fontSize.bodySm,
+      lineHeight: 18,
+    },
+    onboardingBtn: {
+      backgroundColor: colors.text,
+      borderRadius: radius.md,
+      paddingVertical: spacing.lg,
+      alignItems: 'center',
+      marginTop: spacing.xl,
+    },
+    onboardingBtnText: {
+      color: colors.bg,
+      fontSize: fontSize.title,
+      fontWeight: '700',
+    },
+  }), [colors, radius, spacing, font, fontSize, lineHeight, motion]);
 
   const hasKey = apiKey.length > 0;
   const draftChanged = draftKey !== apiKey;
@@ -248,7 +648,7 @@ export function VoiceSettingsScreen() {
               value={draftKey}
               onChangeText={setDraftKey}
               placeholder="sk-or-v1-..."
-              placeholderTextColor="#7c8299"
+              placeholderTextColor={colors.textFaint}
               autoCapitalize="none"
               autoCorrect={false}
               secureTextEntry={!showKey}
@@ -412,7 +812,7 @@ export function VoiceSettingsScreen() {
                 value={customPrompt}
                 onChangeText={setCustomPrompt}
                 placeholder="Inserisci il prompt della personalità..."
-                placeholderTextColor="#7c8299"
+                placeholderTextColor={colors.textFaint}
                 multiline
                 textAlignVertical="top"
               />
@@ -443,6 +843,33 @@ export function VoiceSettingsScreen() {
               </Text>
             </Pressable>
           )}
+        </View>
+
+        {/* ── Theme toggle ──────────────────────────────────────── */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Tema</Text>
+          <View style={styles.toggleRow}>
+            <TouchableOpacity
+              style={[
+                styles.toggleOption,
+                themeMode === 'dark' && styles.toggleOptionActive,
+              ]}
+              onPress={() => setThemeMode('dark')}
+            >
+              <View style={styles.toggleDot} />
+              <Text style={styles.toggleLabel}>Scuro</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.toggleOption,
+                themeMode === 'light' && styles.toggleOptionActive,
+              ]}
+              onPress={() => setThemeMode('light')}
+            >
+              <View style={styles.toggleDot} />
+              <Text style={styles.toggleLabel}>Chiaro</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* ── Low-stimulus toggle ───────────────────────────────────── */}
@@ -491,7 +918,7 @@ export function VoiceSettingsScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#2A385B', marginTop: 12 }]}
+            style={[styles.button, { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.border, marginTop: 12 }]}
             onPress={() => setShowImport(!showImport)}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
@@ -509,7 +936,7 @@ export function VoiceSettingsScreen() {
                 value={importJson}
                 onChangeText={setImportJson}
                 placeholder="Incolla qui il backup JSON…"
-                placeholderTextColor="#7c8299"
+                placeholderTextColor={colors.textFaint}
                 multiline
                 textAlignVertical="top"
               />
@@ -574,405 +1001,3 @@ export function VoiceSettingsScreen() {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  Styles
-// ─────────────────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0B132B', // Night Vault — matches design tokens
-  },
-  scroll: {
-    padding: 20,
-    paddingBottom: 60,
-  },
-  title: {
-    color: '#F7F4EA',
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  subtitle: {
-    color: '#7c8299',
-    fontSize: 12,
-    fontFamily: 'monospace',
-    marginBottom: 28,
-  },
-  section: {
-    marginBottom: 28,
-  },
-  sectionLabel: {
-    color: '#C5BFB0',
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 12,
-  },
-  keyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1C2541',
-    borderColor: '#2A385B',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-  },
-  keyInput: {
-    flex: 1,
-    color: '#F7F4EA',
-    fontSize: 14,
-    fontFamily: 'monospace',
-    paddingVertical: 14,
-  },
-  eyeButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 14,
-  },
-  eyeButtonText: {
-    color: '#C5BFB0',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#7c8299',
-    marginRight: 8,
-  },
-  statusDotOn: {
-    backgroundColor: '#4ade80',
-  },
-  statusText: {
-    color: '#C5BFB0',
-    fontSize: 13,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 16,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonPrimary: {
-    backgroundColor: '#F7F4EA',
-  },
-  buttonPrimaryText: {
-    color: '#0B132B',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  buttonDanger: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#2A385B',
-  },
-  buttonDangerText: {
-    color: '#C5BFB0',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  buttonDisabled: {
-    opacity: 0.4,
-  },
-  optionRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#1C2541',
-    borderColor: '#2A385B',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
-  },
-  optionRowSelected: {
-    borderColor: '#F7F4EA',
-    backgroundColor: '#161d38',
-  },
-  radio: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 2,
-    borderColor: '#2A385B',
-    marginRight: 12,
-    marginTop: 2,
-  },
-  radioSelected: {
-    borderColor: '#F7F4EA',
-    backgroundColor: '#F7F4EA',
-  },
-  optionBody: {
-    flex: 1,
-  },
-  optionLabel: {
-    color: '#C5BFB0',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  optionLabelSelected: {
-    color: '#F7F4EA',
-  },
-  optionWhy: {
-    color: '#7c8299',
-    fontSize: 12,
-    lineHeight: 1.5,
-  },
-  hint: {
-    color: '#7c8299',
-    fontSize: 12,
-    lineHeight: 1.6,
-    marginTop: 8,
-  },
-  genderRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
-  },
-  genderOption: {
-    flex: 1,
-    backgroundColor: '#1C2541',
-    borderColor: '#2A385B',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  genderOptionActive: {
-    borderColor: '#F7F4EA',
-    backgroundColor: '#161d38',
-  },
-  genderLabel: {
-    color: '#C5BFB0',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  genderLabelActive: {
-    color: '#F7F4EA',
-  },
-  moodRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
-  },
-  moodOption: {
-    flex: 1,
-    backgroundColor: '#1C2541',
-    borderColor: '#2A385B',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  moodOptionActive: {
-    borderColor: '#F7F4EA',
-    backgroundColor: '#161d38',
-  },
-  moodLabel: {
-    color: '#C5BFB0',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  moodLabelActive: {
-    color: '#F7F4EA',
-  },
-  previewButton: {
-    backgroundColor: '#161d38',
-    borderColor: '#F7F4EA',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  previewButtonText: {
-    color: '#F7F4EA',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  unlockButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#2A385B',
-    borderStyle: 'dashed',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  unlockButtonText: {
-    color: '#7c8299',
-    fontSize: 12,
-    fontStyle: 'italic',
-  },
-  customPromptInput: {
-    backgroundColor: '#1C2541',
-    borderColor: '#2A385B',
-    borderWidth: 1,
-    borderRadius: 12,
-    color: '#F7F4EA',
-    fontSize: 14,
-    padding: 12,
-    minHeight: 80,
-    textAlignVertical: 'top',
-    marginBottom: 12,
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-  toggleOption: {
-    flex: 1,
-    backgroundColor: '#1C2541',
-    borderColor: '#2A385B',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  toggleOptionActive: {
-    borderColor: '#F7F4EA',
-    backgroundColor: '#161d38',
-  },
-  toggleDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#7c8299',
-  },
-  toggleLabel: {
-    color: '#C5BFB0',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  // ── Voice profile picker ──────────────────────────────────────────────
-  voiceProfileSection: {
-    marginBottom: 16,
-  },
-  voiceProfileSectionLabel: {
-    color: '#7c8299',
-    fontSize: 11,
-    fontFamily: 'monospace',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 8,
-  },
-  voiceProfileGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  voiceProfileOption: {
-    width: '48%',
-    backgroundColor: '#1C2541',
-    borderColor: '#2A385B',
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-  },
-  voiceProfileOptionSelected: {
-    borderColor: '#F7F4EA',
-    backgroundColor: '#161d38',
-  },
-  voiceProfileCardLabelSelected: {
-    color: '#F7F4EA',
-  },
-  voiceProfileName: {
-    color: '#7c8299',
-    fontSize: 10,
-    fontFamily: 'monospace',
-    marginTop: 2,
-  },
-  voiceProfileCardLabel: {
-    color: '#C5BFB0',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  toggleHint: {
-    color: '#7c8299',
-    fontSize: 12,
-    lineHeight: 1.6,
-    marginTop: 8,
-  },
-  // ── Onboarding ──────────────────────────────────────────────────────
-  onboardingScroll: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 24,
-  },
-  resetOnboardingBtn: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#2A385B',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  resetOnboardingBtnText: {
-    color: '#7c8299',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  onboardingCard: {
-    backgroundColor: '#1C2541',
-    borderColor: '#2A385B',
-    borderWidth: 1,
-    borderRadius: 20,
-    padding: 28,
-  },
-  onboardingTitle: {
-    color: '#F7F4EA',
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  onboardingSubtitle: {
-    color: '#7c8299',
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  onboardingPoint: {
-    marginBottom: 18,
-  },
-  onboardingPointTitle: {
-    color: '#F7F4EA',
-    fontSize: 15,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  onboardingPointText: {
-    color: '#C5BFB0',
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  onboardingBtn: {
-    backgroundColor: '#F7F4EA',
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: 28,
-  },
-  onboardingBtnText: {
-    color: '#0B132B',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-});

@@ -97,7 +97,16 @@ function useThemedStyles() {
   });
 }
 
+// Icon name map for onboarding steps
+const ICON_MAP: Record<string, string> = {
+  capture: 'Plus',
+  lior: 'Brain',
+  breakdown: 'List',
+  vault: 'Lock',
+};
+
 export function OnboardingScreen() {
+  const { colors } = useTheme();
   const s = useThemedStyles();
   const navigation = useNavigation<any>();
   const setWasOnboarded = useVitaStore((s) => s.setWasOnboarded);
@@ -150,14 +159,8 @@ export function OnboardingScreen() {
   ];
 
   const renderIcon = (name: string) => {
-    const icons: Record<string, { name: string; color: string }> = {
-      capture: { name: 'Plus', color: '#F4EFE7' },
-      lior: { name: 'Brain', color: '#F4EFE7' },
-      breakdown: { name: 'List', color: '#F4EFE7' },
-      vault: { name: 'Lock', color: '#F4EFE7' },
-    };
-    const icon = icons[name] ?? { name: 'Star', color: '#F4EFE7' };
-    return <Icon name={icon.name as any} size={32} color={icon.color} />;
+    const iconName = ICON_MAP[name] ?? 'Star';
+    return <Icon name={iconName as any} size={32} color={colors.accentInk} />;
   };
 
   const step = steps[currentStep];
