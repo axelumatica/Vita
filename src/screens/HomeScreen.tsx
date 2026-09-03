@@ -14,6 +14,7 @@ import { useVitaStore } from '../store/vita-store';
 import { useTheme } from '../design/ThemeProvider';
 import { Icon } from '../design/Icon';
 import { useLowStimulusEmphasis, useLowStimulusMotion } from '../design/lowStimulus';
+import { EmergencyOverlay } from '../components/EmergencyOverlay';
 import type { RootStackParamList } from '../navigation/NavigationRoot';
 
 function timeOfDay(): 'morning' | 'afternoon' | 'evening' | 'night' {
@@ -151,6 +152,7 @@ export function HomeScreen() {
   const apiKey = useVitaStore((s) => s.openRouterApiKey);
   const winsLog = useVitaStore((s) => s.winsLog);
   const recordWin = useVitaStore((s) => s.recordWin);
+  const emergencyMode = useVitaStore((s) => s.emergencyMode);
 
   const focusTask = vaultEntries.find((e) => e.id === focusTaskId);
   const recent = vaultEntries.filter((e) => !e.isArchived).slice(0, 3);
@@ -182,7 +184,8 @@ export function HomeScreen() {
   }, [completedSteps, totalSteps, recordWin, winsLog.length]);
 
   return (
-    <ScrollView style={s.container} contentContainerStyle={s.content}>
+    <>
+      <ScrollView style={s.container} contentContainerStyle={s.content}>
       {/* Time-of-day greeting */}
       <View style={s.heroCard}>
         <Text style={s.greeting}>{TOD_GREETING[tod]}</Text>
@@ -265,5 +268,7 @@ export function HomeScreen() {
         </View>
       )}
     </ScrollView>
+    <EmergencyOverlay visible={emergencyMode} />
+    </>
   );
 }

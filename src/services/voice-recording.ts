@@ -57,6 +57,8 @@ let onResult: ((result: VoiceResult) => void) | null = null;
 //  Voice event handlers
 // ─────────────────────────────────────────────────────────────────────────────
 
+let onVolume: ((volume: number) => void) | null = null;
+
 Voice.onSpeechStart = () => {
   isListening = true;
 };
@@ -72,6 +74,20 @@ Voice.onSpeechResults = (event: { value?: string[]; error?: string }) => {
   }
   if (event.value?.[0] && onResult) {
     onResult({ text: event.value[0]!, isFinal: true });
+  }
+};
+
+Voice.onSpeechVolumeChanged = (event: { value: number }) => {
+  // event.value is 0-1 on iOS, but can be higher on Android
+  const volume = Math.min(event.value, 1);
+  if (onVolume) {
+    onVolume(volume);
+  }
+};
+
+Voice.onSpeechError = (event: { error?: string }) => {
+  if (event.error && onError) {
+    onError({ code: 'RECOGNITION_FAILED', message: event.error });
   }
 };
 
@@ -100,6 +116,7 @@ export function getActiveRecording(): Audio.Recording | null {
 export async function startRecording(
   onSpeechResult: (result: VoiceResult) => void,
   onErrorCallback: (error: VoiceError) => void,
+  onVolumeCallback?: (volume: number) => void,
 ): Promise<void> {
   // Stop any existing recording
   if (recording) {
@@ -136,6 +153,7 @@ export async function startRecording(
   // Set up speech recognition
   onResult = onSpeechResult;
   onError = onErrorCallback;
+  onVolume = onVolumeCallback ?? null;
 
   try {
     await Voice.start('it-IT', {

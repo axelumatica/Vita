@@ -41,6 +41,10 @@ import {
   Zap,
   List,
   Trophy,
+  Wind,
+  Droplet,
+  Phone,
+  X,
   type LucideProps,
 } from 'lucide-react-native';
 import { useTheme } from './ThemeProvider';
@@ -76,6 +80,10 @@ const ICONS = {
   Zap,
   List,
   Trophy,
+  Wind,
+  Droplet,
+  Phone,
+  X,
 } as const;
 
 export type IconName = keyof typeof ICONS;

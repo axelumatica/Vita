@@ -8,7 +8,7 @@
  *   - Model selector per role (chat / extract / breakdown)
  *
  * The key is stored in the Zustand store (vita-store), persisted via
- * AsyncStorage. Future iterations will add: TTS voice picker, low-stimulus
+ * MMKV. Future iterations will add: TTS voice picker, low-stimulus
  * toggle, persona editor.
  *
  * This screen is a presentational component — no Lior calls are made from
@@ -27,10 +27,12 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Switch,
 } from 'react-native';
 import { useVitaStore } from '../store/vita-store';
 import { useTheme } from '../design/ThemeProvider';
 import { Icon } from '../design/Icon';
+import { DebugPanel } from '../components/DebugPanel';
 import {
   LIOR_MODELS,
   PROCESSING_DISCLOSURE,
@@ -60,6 +62,7 @@ export function VoiceSettingsScreen() {
 
   const [draftKey, setDraftKey] = useState(apiKey);
   const [showKey, setShowKey] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
 
   // Precompute styles using theme tokens
   const styles = useMemo(() => StyleSheet.create({
@@ -629,9 +632,10 @@ export function VoiceSettingsScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* ── Header ──────────────────────────────────────────────── */}
@@ -895,6 +899,28 @@ export function VoiceSettingsScreen() {
           </Text>
         </View>
 
+        {/* ── Debug panel toggle ──────────────────────────────────── */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Pannello di Debug</Text>
+          <View style={styles.toggleRow}>
+            <TouchableOpacity
+              style={[
+                styles.toggleOption,
+                showDebug && styles.toggleOptionActive,
+              ]}
+              onPress={() => setShowDebug(!showDebug)}
+            >
+              <View style={styles.toggleDot} />
+              <Text style={styles.toggleLabel}>
+                {showDebug ? 'Attivo' : 'Disattivato'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.toggleHint}>
+            Mostra stato dello store, performance e info di sistema.
+          </Text>
+        </View>
+
         {/* ── Model pickers ───────────────────────────────────────── */}
         {renderModelPicker('chat')}
         {renderModelPicker('extract')}
@@ -998,6 +1024,8 @@ export function VoiceSettingsScreen() {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+    <DebugPanel visible={showDebug} onToggle={() => setShowDebug(false)} />
+    </>
   );
 }
 

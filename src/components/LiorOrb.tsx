@@ -42,7 +42,8 @@ type OrbState =
   | 'thinking'
   | 'speaking'
   | 'overload'
-  | 'softLanding';
+  | 'softLanding'
+  | 'emergency';
 
 interface LiorOrbProps {
   state: OrbState;
@@ -92,6 +93,7 @@ export function LiorOrb({ state, caption, size = 155 }: LiorOrbProps) {
       speaking: { duration: 800, targetScale: 1.03, targetGlow: 0.28 },
       overload: { duration: 9000, targetScale: 1.01, targetGlow: 0.40 },
       softLanding: { duration: 12000, targetScale: 1.005, targetGlow: 0.20 },
+      emergency: { duration: 6000, targetScale: 1.005, targetGlow: 0.45 },
     };
 
     const c = config[state] ?? config.idle;

@@ -34,7 +34,9 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { LiorOrb } from '../components/LiorOrb';
+import { EmergencyOverlay } from '../components/EmergencyOverlay';
 import { Icon } from '../design/Icon';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -42,6 +44,7 @@ import type { RootStackParamList } from '../navigation/NavigationRoot';
 import { useTheme } from '../design/ThemeProvider';
 import { useVitaStore } from '../store/vita-store';
 import type { VaultEntryType } from '../store/vita-store';
+import { VoiceVisualizer } from '../components/VoiceVisualizer';
 import {
   extractTasks,
   breakdownTask,
@@ -90,12 +93,15 @@ export function LiorScreen() {
   const apiKey = useVitaStore((s) => s.openRouterApiKey);
   const addEntry = useVitaStore((s) => s.addEntry);
   const clearScratchpad = useVitaStore((s) => s.clearScratchpad);
+  const setEmergencyMode = useVitaStore((s) => s.setEmergencyMode);
+  const emergencyMode = useVitaStore((s) => s.emergencyMode);
 
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ScratchpadMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [overloadMode, setOverloadMode] = useState(false);
   const [lastExtraction, setLastExtraction] = useState<ExtractionResult | null>(null);
+  const [volumeLevel, setVolumeLevel] = useState(0);
 
   // ── Voice recording state ─────────────────────────────────────────
   const [isRecording, setIsRecording] = useState(false);
@@ -304,6 +310,9 @@ export function LiorScreen() {
             clearScratchpad();
             setMessages([]);
             setOverloadMode(true);
+            // Soft haptic feedback for entering emergency mode
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setEmergencyMode(true);
           },
         },
       ],
@@ -314,6 +323,7 @@ export function LiorScreen() {
   async function handleStartRecording() {
     if (isRecording) {
       // Stop recording and process
+      setVolumeLevel(0);
       setIsRecording(false);
       setIsTranscribing(true);
 
@@ -347,6 +357,10 @@ export function LiorScreen() {
           Alert.alert('Errore riconoscimento', error.message);
           setIsRecording(false);
           setIsTranscribing(false);
+        },
+        (volume: number) => {
+          // Update volume for visualizer
+          setVolumeLevel(volume);
         }
       );
     } catch (err) {
@@ -414,9 +428,10 @@ export function LiorScreen() {
   // ── Render ──────────────────────────────────────────────────────────────
 
   return (
-    <KeyboardAvoidingView
-      style={s.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <>
+      <KeyboardAvoidingView
+        style={s.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       {/* ── Top bar ─────────────────────────────────────────────── */}
       <View style={s.topBar}>
@@ -445,26 +460,30 @@ export function LiorScreen() {
       <View style={s.presenceArea}>
         <LiorOrb
           state={
-            overloadMode
-              ? 'overload'
-              : isRecording || isTranscribing
-                ? 'listening'
-                : isLoading
-                  ? 'thinking'
-                  : 'idle'
+            emergencyMode
+              ? 'emergency'
+              : overloadMode
+                ? 'overload'
+                : isRecording || isTranscribing
+                  ? 'listening'
+                  : isLoading
+                    ? 'thinking'
+                    : 'idle'
           }
           caption={
-            overloadMode
-              ? 'Overload — slowing down'
-              : isRecording
-                ? 'Ascolto…'
-                : isTranscribing
-                  ? 'Trascrizione…'
-                  : isLoading
-                    ? 'Elaborazione…'
-                    : messages.length === 0
-                      ? FIRST_GREETING
-                      : LISTENING_PROMPT
+            emergencyMode
+              ? 'Modalità Emergenza — respira'
+              : overloadMode
+                ? 'Overload — slowing down'
+                : isRecording
+                  ? 'Ascolto…'
+                  : isTranscribing
+                    ? 'Trascrizione…'
+                    : isLoading
+                      ? 'Elaborazione…'
+                      : messages.length === 0
+                        ? FIRST_GREETING
+                        : LISTENING_PROMPT
           }
         />
       </View>
@@ -554,7 +573,7 @@ export function LiorScreen() {
           accessibilityRole="button"
           style={s.recordingInProgress}
         >
-          <Icon name="Mic" size={16} color={colors.accent} />
+          <VoiceVisualizer volume={volumeLevel} isListening={true} />
           <Text style={[s.recordingText, { marginLeft: 4 }]}>Ascolto...</Text>
         </View>
       ) : (
@@ -568,8 +587,14 @@ export function LiorScreen() {
           onPress={handleStartRecording}
           disabled={isLoading}
         >
-          <Icon name="Mic" size={16} color={isRecording ? colors.accent : colors.textDim} />
-          <Text style={[s.shortcutText, { marginLeft: 4 }]}>{isRecording ? 'Stop' : 'Voice'}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {isRecording ? (
+              <VoiceVisualizer volume={volumeLevel} isListening={true} />
+            ) : (
+              <Icon name="Mic" size={16} color={colors.textDim} />
+            )}
+            <Text style={[s.shortcutText, { marginLeft: 4 }]}>{isRecording ? 'Stop' : 'Voice'}</Text>
+          </View>
         </TouchableOpacity>
       )}
 
@@ -617,6 +642,8 @@ export function LiorScreen() {
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
+    <EmergencyOverlay visible={emergencyMode} />
+    </>
   );
 }
 
