@@ -2,7 +2,7 @@
  * src/store/vita-store.ts
  *
  * Single Zustand store with persist middleware.
- * Persists to AsyncStorage under the key 'vita-store'.
+ * Persists to MMKV under the id 'vita-store'.
  *
  * This is the full data model for Vita. Every screen reads from this store.
  *
@@ -19,10 +19,27 @@
  */
 
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { persist, createJSONStorage, StateStorage } from 'zustand/middleware';
+import { createMMKV } from 'react-native-mmkv';
 import type { VoiceProfileId } from '../ai/voice-profiles';
 import { getVoiceProfile } from '../ai/voice-profiles';
+
+// Create MMKV instance for Vita store
+const vitaMMKV = createMMKV({ id: 'vita-store' });
+
+// MMKV storage adapter for Zustand persist middleware
+const mmkvStorage: StateStorage = {
+  getItem: (name: string): string | null => {
+    const value = vitaMMKV.getString(name);
+    return value ?? null;
+  },
+  setItem: (name: string, value: string): void => {
+    vitaMMKV.set(name, value);
+  },
+  removeItem: (name: string): void => {
+    vitaMMKV.remove(name);
+  },
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  ID helper
@@ -166,6 +183,12 @@ export interface VitaStore {
 
   lowStimulus: boolean;
   setLowStimulus: (on: boolean) => void;
+
+  emergencyMode: boolean;
+  setEmergencyMode: (on: boolean) => void;
+
+  debugMode: boolean;
+  setDebugMode: (on: boolean) => void;
 
   wasOnboarded: boolean;
   setWasOnboarded: (on: boolean) => void;
@@ -395,6 +418,12 @@ export const useVitaStore = create<VitaStore>()(
       lowStimulus: false,
       setLowStimulus: (on) => set({ lowStimulus: on }),
 
+      emergencyMode: false,
+      setEmergencyMode: (on) => set({ emergencyMode: on }),
+
+      debugMode: false,
+      setDebugMode: (on) => set({ debugMode: on }),
+
       wasOnboarded: false,
       setWasOnboarded: (on) => set({ wasOnboarded: on }),
 
@@ -464,6 +493,8 @@ export const useVitaStore = create<VitaStore>()(
           scratchpad: [],
           themeMode: 'dark',
           lowStimulus: false,
+          emergencyMode: false,
+          debugMode: false,
           persona: DEFAULT_PERSONA,
           personaMode: DEFAULT_PERSONA_MODE,
           voiceGender: DEFAULT_VOICE_GENDER,
@@ -475,7 +506,7 @@ export const useVitaStore = create<VitaStore>()(
     }),
     {
       name: 'vita-store',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => mmkvStorage),
       // Persist everything except the ephemeral UI flags.
       partialize: (state) => {
         // Strip any non-serializable / non-persisted fields.

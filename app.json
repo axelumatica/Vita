@@ -27,7 +27,9 @@
       "bundleIdentifier": "com.vita.app"
     },
     "plugins": [
-      "expo-speech"
+      "expo-speech",
+      "react-native-mmkv",
+      "expo-splash-screen"
     ],
     "extra": {
       "eas": {
