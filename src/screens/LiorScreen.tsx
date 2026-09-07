@@ -42,6 +42,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/NavigationRoot';
 import { useTheme } from '../design/ThemeProvider';
+import { Fonts } from '../design/tokens';
 import { useVitaStore } from '../store/vita-store';
 import type { VaultEntryType } from '../store/vita-store';
 import { VoiceVisualizer } from '../components/VoiceVisualizer';
@@ -670,7 +671,7 @@ function useThemedStyles() {
     processingBadge: {
       color: lowStimulus ? colors.textFaint : colors.textDim,
       fontSize: fontSize.mono,
-      fontFamily: 'monospace',
+      fontFamily: Fonts.mono,
       letterSpacing: 0.5,
     },
     clearBtn: {
@@ -679,7 +680,7 @@ function useThemedStyles() {
     clearBtnText: {
       color: colors.textFaint,
       fontSize: 12,
-      fontFamily: 'monospace',
+      fontFamily: Fonts.mono,
     },
     topBarRight: {
       flexDirection: 'row',

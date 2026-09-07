@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import { useVitaStore } from '../store/vita-store';
 import { useTheme } from '../design/ThemeProvider';
+import { Fonts } from '../design/tokens';
 import { Icon } from '../design/Icon';
 import {
   startRecording,
@@ -47,16 +48,29 @@ function useThemedStyles() {
     eyebrow: {
       color: colors.textFaint,
       fontSize: 11,
-      fontFamily: 'monospace',
-      letterSpacing: 0.8,
+      fontFamily: Fonts.display,
+      letterSpacing: 1.2,
       marginBottom: 8,
     },
-    body: { color: colors.textDim, fontSize: 14, lineHeight: 21 },
+    diaryTitle: {
+      color: colors.text,
+      fontSize: 22,
+      fontFamily: Fonts.display,
+      fontWeight: '700',
+      marginBottom: 12,
+      letterSpacing: -0.2,
+    },
+    diaryBody: {
+      color: colors.textDim,
+      fontSize: 15,
+      lineHeight: 22,
+    },
+    body: { color: colors.textDim, fontSize: 15, lineHeight: 22 },
     entries: { marginTop: 8 },
     sectionLabel: {
       color: colors.textFaint,
       fontSize: 10,
-      fontFamily: 'monospace',
+      fontFamily: Fonts.mono,
       letterSpacing: 0.8,
       marginBottom: 10,
     },
@@ -69,7 +83,7 @@ function useThemedStyles() {
       marginBottom: 8,
     },
     entryText: { color: colors.text, fontSize: 14, lineHeight: 21, marginBottom: 6 },
-    entryMeta: { color: colors.textFaint, fontSize: 11, fontFamily: 'monospace' },
+    entryMeta: { color: colors.textFaint, fontSize: 11, fontFamily: Fonts.mono },
     inputRow: {
       flexDirection: 'row',
       alignItems: 'flex-end',
@@ -215,9 +229,9 @@ export function DiaryScreen() {
         <View style={styles.introCard}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Icon name="BookOpen" size={13} color={colors.textFaint} />
-          <Text style={styles.eyebrow}>DIARIO</Text>
+          <Text style={styles.diaryTitle}>DIARIO</Text>
         </View>
-          <Text style={styles.body}>
+          <Text style={styles.diaryBody}>
             Scrivi senza pensare alla forma. I tuoi pensieri esatti vanno direttamente
             nello scratchpad, pronti per essere elaborati da Lior.
           </Text>

@@ -20,6 +20,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import { useTheme } from '../design/ThemeProvider';
+import { Fonts } from '../design/tokens';
 import { useVitaStore } from '../store/vita-store';
 import { Icon } from '../design/Icon';
 import { HomeScreen } from '../screens/HomeScreen';
@@ -78,7 +79,7 @@ function useTabStyles() {
     tabLabel: {
       fontSize: 10,
       color: colors.textFaint,
-      fontFamily: 'monospace',
+      fontFamily: Fonts.mono,
       letterSpacing: 0.4,
     },
     tabLabelActive: {

@@ -34,6 +34,7 @@ import {
   Stop,
 } from 'react-native-svg';
 import { useTheme } from '../design/ThemeProvider';
+import { Fonts } from '../design/tokens';
 import { useVitaStore } from '../store/vita-store';
 
 type OrbState =
@@ -121,27 +122,46 @@ export function LiorOrb({ state, caption, size = 155 }: LiorOrbProps) {
     transform: [{ scale: scale.value }],
   }));
 
-  return (
-    <View style={[styles.container, { width: size, height: size }]}>
-      <Animated.View style={[styles.orb, animatedStyle]}>
-        <Svg width={size} height={size}>
-          <Defs>
-            <RadialGradient id="orbGrad" cx="32%" cy="28%" r="50%">
-              {orbGradStops.map((stop) => (
-                <Stop
-                  key={stop.offset}
-                  offset={stop.offset}
-                  stopColor={stop.stopColor}
-                />
-              ))}
-            </RadialGradient>
-          </Defs>
-          <Circle cx={size / 2} cy={size / 2} r={size / 2} fill="url(#orbGrad)" />
-        </Svg>
-      </Animated.View>
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
+  }));
 
-      {/* Outer glow */}
-      <Animated.View style={[styles.glow, { opacity: glowOpacity, backgroundColor: colors.accent }]} />
+  return (
+    <View style={styles.container}>
+      <View style={[styles.orbWrap, { width: size * 1.6, height: size * 1.6 }]}>
+        {/* Outer glow — soft halo, behind the orb */}
+        <Animated.View
+          style={[
+            styles.glow,
+            {
+              width: size * 1.5,
+              height: size * 1.5,
+              borderRadius: (size * 1.5) / 2,
+              backgroundColor: colors.accent,
+              top: (size * 1.6 - size * 1.5) / 2,
+              left: (size * 1.6 - size * 1.5) / 2,
+            },
+            glowStyle,
+          ]}
+        />
+
+        <Animated.View style={[styles.orb, { width: size, height: size, borderRadius: size / 2 }, animatedStyle]}>
+          <Svg width={size} height={size}>
+            <Defs>
+              <RadialGradient id="orbGrad" cx="32%" cy="28%" r="60%">
+                {orbGradStops.map((stop) => (
+                  <Stop
+                    key={stop.offset}
+                    offset={stop.offset}
+                    stopColor={stop.stopColor}
+                  />
+                ))}
+              </RadialGradient>
+            </Defs>
+            <Circle cx={size / 2} cy={size / 2} r={size / 2} fill="url(#orbGrad)" />
+          </Svg>
+        </Animated.View>
+      </View>
 
       {/* Caption */}
       {caption && (
@@ -158,26 +178,28 @@ export function LiorOrb({ state, caption, size = 155 }: LiorOrbProps) {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  orbWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
   orb: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 77.5, // half of 155
     overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   glow: {
     position: 'absolute',
-    width: '100%',
-    height: '100%',
-    borderRadius: 77.5,
-    opacity: 0.25,
   },
   caption: {
-    marginTop: 8,
+    marginTop: 12,
     alignItems: 'center',
   },
   captionText: {
     fontSize: 12,
-    fontFamily: 'monospace',
+    fontFamily: Fonts.mono,
+    letterSpacing: 0.4,
   },
 });

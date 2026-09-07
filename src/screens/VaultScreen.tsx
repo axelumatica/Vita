@@ -18,6 +18,7 @@ import {
 import { useVitaStore } from '../store/vita-store';
 import { useTheme } from '../design/ThemeProvider';
 import { Icon } from '../design/Icon';
+import { Fonts } from '../design/tokens';
 import { clusterEntries } from '../ai';
 import type { VaultEntryType, ProjectCluster } from '../store/vita-store';
 
@@ -102,8 +103,8 @@ function useThemedStyles() {
       paddingHorizontal: 8,
       paddingVertical: 3,
     },
-    tagText: { color: colors.textFaint, fontSize: 11, fontFamily: 'monospace' },
-    cardMeta: { color: colors.textFaint, fontSize: 11, fontFamily: 'monospace' },
+    tagText: { color: colors.textFaint, fontSize: 11, fontFamily: Fonts.mono },
+    cardMeta: { color: colors.textFaint, fontSize: 11, fontFamily: Fonts.mono },
   });
 }
 
@@ -195,7 +196,7 @@ export function VaultScreen() {
       </View>
 
       <View style={s.pillRow}>
-        {(['all', 'TASK', 'DIARY', 'NOTE'] as Filter[]).map((f) => {
+        {(['all', 'TASK', 'DIARY', 'VOICE', 'NOTE'] as Filter[]).map((f) => {
           const count = f === 'all'
             ? vaultEntries.filter((e) => !e.isArchived).length
             : counts[f as VaultEntryType] ?? 0;
@@ -210,7 +211,10 @@ export function VaultScreen() {
                 size={14}
                 color={filter === f ? '#F7F4EA' : '#C5BFB0'}
               />
-              <Text style={[s.pillText, filter === f && s.pillTextOn, { marginLeft: 4 }]}>
+              <Text
+                style={[s.pillText, filter === f && s.pillTextOn, { marginLeft: 4 }]}
+                numberOfLines={1}
+              >
                 {FILTER_LABELS[f].label} {count > 0 ? `(${count})` : ''}
               </Text>
             </TouchableOpacity>
