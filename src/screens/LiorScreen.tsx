@@ -447,12 +447,15 @@ export function LiorScreen() {
             <Text style={s.clearBtnText}>Svuota</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            accessibilityLabel="Impostazioni"
+            accessibilityLabel="Impostazioni e modalità emergenza"
             accessibilityRole="button"
             onPress={() => navigation.navigate('Settings')}
             style={s.settingsBtn}
           >
-            <Icon name="Settings" size={16} color={s.processingBadge.color} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+              <Icon name="Settings" size={24} color={s.processingBadge.color} />
+              <Icon name="ShieldAlert" size={24} color={s.processingBadge.color} />
+            </View>
           </TouchableOpacity>
         </View>
       </View>
@@ -688,14 +691,15 @@ function useThemedStyles() {
       gap: spacing.sm,
     },
     settingsBtn: {
-      width: 28,
-      height: 28,
-      borderRadius: 8,
+      width: 44,
+      height: 44,
+      borderRadius: 12,
       backgroundColor: lowStimulus ? colors.bg : colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
       alignItems: 'center',
       justifyContent: 'center',
+      gap: 2,
     },
     presenceArea: {
       alignItems: 'center',
