@@ -89,6 +89,7 @@ export function LiorScreen() {
   const { colors } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const apiKey = useVitaStore((s) => s.openRouterApiKey);
+  const modelSelection = useVitaStore((s) => s.modelSelection);
   const addEntry = useVitaStore((s) => s.addEntry);
   const clearScratchpad = useVitaStore((s) => s.clearScratchpad);
   const setEmergencyMode = useVitaStore((s) => s.setEmergencyMode);
@@ -153,7 +154,7 @@ export function LiorScreen() {
     try {
       let fullReply = '';
       // Use streaming chat for incremental response.
-      for await (const chunk of streamChat([{ role: 'user', content: text }], apiKey)) {
+      for await (const chunk of streamChat([{ role: 'user', content: text }], apiKey, modelSelection.chat)) {
         if (!chunk) break; // End sentinel
         fullReply += chunk;
         setMessages((prev) =>
@@ -166,7 +167,7 @@ export function LiorScreen() {
       // Context-aware: automatically extract tasks and diary items
       let extractionResult: ExtractionResult | null = null;
       try {
-        extractionResult = await extractTasks(text, apiKey);
+        extractionResult = await extractTasks(text, apiKey, modelSelection.extract);
       } catch {
         // Extraction is best-effort, don't block on it
       }

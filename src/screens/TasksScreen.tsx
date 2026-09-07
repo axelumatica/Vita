@@ -145,6 +145,7 @@ export function TasksScreen() {
   const addTaskSteps = useVitaStore((s) => s.addTaskSteps);
   const taskSteps = useVitaStore((s) => s.taskSteps);
   const openRouterApiKey = useVitaStore((s) => s.openRouterApiKey);
+  const modelSelection = useVitaStore((s) => s.modelSelection);
   const toggleTaskStep = useVitaStore((s) => s.toggleTaskStep);
   const [showBacklog, setShowBacklog] = useState(false);
   const [isBreakingDown, setIsBreakingDown] = useState(false);
@@ -175,7 +176,7 @@ export function TasksScreen() {
     setIsBreakingDown(true);
     setBreakdownError(null);
     try {
-      const steps = await breakdownTask(focusTask.title, openRouterApiKey);
+      const steps = await breakdownTask(focusTask.title, openRouterApiKey, modelSelection?.breakdown);
       addTaskSteps(focusTask.id, steps);
       // Reset timer when breakdown completes
       resetTimer();
@@ -186,7 +187,7 @@ export function TasksScreen() {
     } finally {
       setIsBreakingDown(false);
     }
-  }, [focusTask, openRouterApiKey, addTaskSteps]);
+  }, [focusTask, openRouterApiKey, modelSelection, addTaskSteps]);
 
   // ── 2-min timer state ─────────────────────────────────────────────
   const [timerSecondsLeft, setTimerSecondsLeft] = useState(120); // 2 min in seconds
