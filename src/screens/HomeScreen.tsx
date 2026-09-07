@@ -5,12 +5,13 @@
  * ADHD-friendly: no shame, no streaks, just a gentle progress indicator.
  */
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useNavigation, CompositeNavigationProp } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useVitaStore } from '../store/vita-store';
+import { breakdownTask } from '../ai';
 import { useTheme } from '../design/ThemeProvider';
 import { Fonts } from '../design/tokens';
 import { Icon } from '../design/Icon';
@@ -63,31 +64,29 @@ function useThemedStyles() {
       alignItems: 'center',
       justifyContent: 'center',
     },
-    /* Hero card — focus + organic CTA */
-    heroCard: {
-      backgroundColor: colors.surface,
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: radius.lg,
-      padding: 24,
-      marginBottom: 16,
+    /* Quiet greeting — time-of-day, one line, no hero treatment */
+    greeting: {
+      marginBottom: 20,
+      paddingHorizontal: 4,
     },
-    heroEyebrow: {
-      color: colors.textFaint,
-      fontSize: 11,
-      fontFamily: Fonts.mono,
-      letterSpacing: 0.8,
-      marginBottom: 8,
+    greetingText: {
+      color: colors.text,
+      fontSize: 17,
+      fontWeight: '600',
+      marginBottom: 2,
     },
-    heroTitle: { color: colors.text, fontSize: 22, fontWeight: '700', marginBottom: 6 },
-    heroSubtitle: { color: colors.textDim, fontSize: 15, lineHeight: 22 },
+    greetingHint: {
+      color: colors.textDim,
+      fontSize: 14,
+      lineHeight: 20,
+    },
     /* Organic CTA card */
     ctaCard: {
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
       borderRadius: radius.lg,
-      padding: 20,
+      padding: 16,
       marginBottom: 16,
     },
     ctaText: { color: colors.text, fontSize: 16, lineHeight: 24 },
@@ -108,6 +107,9 @@ function useThemedStyles() {
       borderRadius: radius.lg,
       padding: 20,
       marginBottom: 16,
+      // Subtle top-edge highlight per design tokens: shadowTop
+      borderTopWidth: 1,
+      borderTopColor: colors.shadowTop,
     },
     focusEyebrow: {
       color: colors.accent,
@@ -134,6 +136,7 @@ function useThemedStyles() {
       alignItems: 'center',
     },
     focusBtnText: { color: colors.textDim, fontSize: 13, fontWeight: '600' },
+    focusBtnDisabled: { opacity: 0.5 },
     focusBtnPrimary: { backgroundColor: colors.accent },
     focusBtnPrimaryText: { color: colors.accentInk },
     /* Quick actions row */
@@ -184,12 +187,38 @@ export function HomeScreen() {
   const vaultEntries = useVitaStore((s) => s.vaultEntries);
   const focusTaskId = useVitaStore((s) => s.focusTaskId);
   const emergencyMode = useVitaStore((s) => s.emergencyMode);
+  const openRouterApiKey = useVitaStore((s) => s.openRouterApiKey);
+  const modelSelection = useVitaStore((s) => s.modelSelection);
+  const archiveEntry = useVitaStore((s) => s.archiveEntry);
+  const setFocusTask = useVitaStore((s) => s.setFocusTask);
+  const addTaskSteps = useVitaStore((s) => s.addTaskSteps);
+
+  const [isBreakingDown, setIsBreakingDown] = useState(false);
 
   const focusTask = vaultEntries.find((e) => e.id === focusTaskId);
   const recent = vaultEntries.filter((e) => !e.isArchived).slice(0, 3);
   const hasEntries = vaultEntries.filter((e) => !e.isArchived).length > 0;
 
   const tod = timeOfDay();
+
+  const handleBreakdown = useCallback(async () => {
+    if (!focusTask || !openRouterApiKey) return;
+    setIsBreakingDown(true);
+    try {
+      const steps = await breakdownTask(focusTask.title, openRouterApiKey, modelSelection?.breakdown);
+      addTaskSteps(focusTask.id, steps);
+    } catch {
+      // Silent — the Tasks screen will show its own error if the user retries there.
+    } finally {
+      setIsBreakingDown(false);
+    }
+  }, [focusTask, openRouterApiKey, modelSelection, addTaskSteps]);
+
+  function handleDone() {
+    if (!focusTask) return;
+    archiveEntry(focusTask.id);
+    setFocusTask(null);
+  }
 
   return (
     <>
@@ -206,25 +235,45 @@ export function HomeScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Quiet greeting — time-of-day, one line, no hero treatment */}
+        <View style={s.greeting}>
+          <Text style={s.greetingText}>{TOD_GREETING[tod]}</Text>
+          <Text style={s.greetingHint}>{TOD_HINT[tod]}</Text>
+        </View>
+
         {/* Focus card — only when there's a focus task */}
         {focusTask && (
           <View style={s.focusCard}>
-            <Text style={s.focusEyebrow}>🎯 FOCUS</Text>
+            <Text style={s.focusEyebrow}>
+              <Icon name="Target" size={10} color={colors.accent} /> FOCUS
+            </Text>
             <Text style={s.focusTitle}>{focusTask.title}</Text>
             <Text style={s.focusStep}>
               Una micro-azione alla volta. Sceglila qui sotto.
             </Text>
             <View style={s.focusActions}>
-              <TouchableOpacity style={s.focusBtn} accessibilityLabel="Riduci ulteriormente" accessibilityRole="button">
-                <Text style={s.focusBtnText}>Riduci</Text>
+              <TouchableOpacity
+                style={[s.focusBtn, isBreakingDown && s.focusBtnDisabled]}
+                accessibilityLabel="Riduci ulteriormente"
+                accessibilityRole="button"
+                onPress={handleBreakdown}
+                disabled={isBreakingDown}
+              >
+                <Text style={s.focusBtnText}>{isBreakingDown ? '...' : 'Riduci'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={s.focusBtn} accessibilityLabel="Dammi 2 minuti" accessibilityRole="button">
+              <TouchableOpacity
+                style={s.focusBtn}
+                accessibilityLabel="Dammi 2 minuti"
+                accessibilityRole="button"
+                onPress={() => nav.navigate('TasksTab')}
+              >
                 <Text style={s.focusBtnText}>2 min</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[s.focusBtn, s.focusBtnPrimary]}
                 accessibilityLabel="Segna come fatto"
                 accessibilityRole="button"
+                onPress={handleDone}
               >
                 <Text style={[s.focusBtnText, s.focusBtnPrimaryText]}>Fatto</Text>
               </TouchableOpacity>
