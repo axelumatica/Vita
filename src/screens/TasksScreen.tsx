@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Vibration } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Vibration, TextInput, Keyboard } from 'react-native';
 import { useVitaStore } from '../store/vita-store';
 import { breakdownTask } from '../ai';
 import { useTheme } from '../design/ThemeProvider';
@@ -133,6 +133,33 @@ function useThemedStyles() {
       paddingVertical: 8,
     },
     addTimeText: { color: colors.textDim, fontSize: 13, fontWeight: '600' },
+    emptyWrap: { paddingHorizontal: 4 },
+    quickTaskRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginTop: 12,
+    },
+    quickTaskInput: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      color: colors.text,
+      fontSize: 15,
+    },
+    quickTaskBtn: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: colors.accent,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    quickTaskBtnDisabled: { opacity: 0.4 },
   });
 }
 
@@ -144,12 +171,33 @@ export function TasksScreen() {
   const archiveEntry = useVitaStore((s) => s.archiveEntry);
   const addTaskSteps = useVitaStore((s) => s.addTaskSteps);
   const taskSteps = useVitaStore((s) => s.taskSteps);
+  const addEntry = useVitaStore((s) => s.addEntry);
   const openRouterApiKey = useVitaStore((s) => s.openRouterApiKey);
   const modelSelection = useVitaStore((s) => s.modelSelection);
   const toggleTaskStep = useVitaStore((s) => s.toggleTaskStep);
   const [showBacklog, setShowBacklog] = useState(false);
   const [isBreakingDown, setIsBreakingDown] = useState(false);
   const [breakdownError, setBreakdownError] = useState<string | null>(null);
+
+  // ── Quick focus creation (when nothing is in focus) ──────────────
+  const [quickTaskInput, setQuickTaskInput] = useState('');
+  const handleCreateQuickTask = useCallback(() => {
+    const text = quickTaskInput.trim();
+    if (!text) return;
+    const created = addEntry({
+      type: 'TASK',
+      title: text,
+      content: text,
+      isArchived: false,
+      projectClusterId: null,
+      tags: [],
+      confidence: 1,
+      isLowConfidence: false,
+    });
+    setFocusTask(created.id);
+    setQuickTaskInput('');
+    Keyboard.dismiss();
+  }, [quickTaskInput, addEntry, setFocusTask]);
 
   const focusTask = focusTaskId ? allTasks.find((t) => t.id === focusTaskId) : null;
   const focusSteps = focusTaskId
@@ -178,7 +226,6 @@ export function TasksScreen() {
     try {
       const steps = await breakdownTask(focusTask.title, openRouterApiKey, modelSelection?.breakdown);
       addTaskSteps(focusTask.id, steps);
-      // Reset timer when breakdown completes
       resetTimer();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Errore sconosciuto';
@@ -189,103 +236,84 @@ export function TasksScreen() {
     }
   }, [focusTask, openRouterApiKey, modelSelection, addTaskSteps]);
 
-  // ── 2-min timer state ─────────────────────────────────────────────
-  const [timerSecondsLeft, setTimerSecondsLeft] = useState(120); // 2 min in seconds
+  // ── 2-min timer (single interval, no nested setIntervals) ──────
+  const [timerSecondsLeft, setTimerSecondsLeft] = useState(120);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timerCompleted, setTimerCompleted] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  function resetTimer() {
-    if (timerRef.current) {
+  /** Clear the interval and reset state safely. */
+  const clearTimer = useCallback(() => {
+    if (timerRef.current !== null) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+  }, []);
+
+  function resetTimer() {
+    clearTimer();
     setTimerSecondsLeft(120);
     setTimerCompleted(false);
     setIsTimerRunning(false);
   }
+
+  /** Single tick function — shared by startTimer and addTwoMinutes. */
+  const tick = useCallback(() => {
+    setTimerSecondsLeft((prev) => {
+      if (prev <= 1) {
+        clearTimer();
+        setIsTimerRunning(false);
+        setTimerCompleted(true);
+        triggerCompletionFeedback();
+        return 0;
+      }
+      if (prev % 30 === 0 && prev < 120) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      }
+      return prev - 1;
+    });
+  }, [clearTimer]);
 
   function startTimer() {
     if (isTimerRunning) return;
     setTimerSecondsLeft(120);
     setTimerCompleted(false);
     setIsTimerRunning(true);
-
-    timerRef.current = setInterval(async () => {
-      setTimerSecondsLeft((prev) => {
-        if (prev <= 1) {
-          // Timer complete
-          clearInterval(timerRef.current!);
-          timerRef.current = null;
-          setIsTimerRunning(false);
-          setTimerCompleted(true);
-          triggerCompletionFeedback();
-          return 0;
-        }
-        // Haptic tick every 30 seconds
-        if (prev % 30 === 0 && prev < 120) {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    timerRef.current = setInterval(tick, 1000);
   }
 
   function addTwoMinutes() {
     setTimerSecondsLeft((prev) => prev + 120);
     if (!isTimerRunning) {
       setIsTimerRunning(true);
-      timerRef.current = setInterval(async () => {
-        setTimerSecondsLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(timerRef.current!);
-            timerRef.current = null;
-            setIsTimerRunning(false);
-            setTimerCompleted(true);
-            triggerCompletionFeedback();
-            return 0;
-          }
-          if (prev % 30 === 0 && prev < 120) {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      timerRef.current = setInterval(tick, 1000);
     }
   }
 
   async function triggerCompletionFeedback() {
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } catch {
-      // Ignore
-    }
+    } catch { /* ignore */ }
     try {
       Vibration.vibrate([0, 200, 100, 200]);
-    } catch {
-      // Ignore
-    }
+    } catch { /* ignore */ }
   }
 
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, []);
+  // Cleanup on unmount
+  useEffect(() => clearTimer, [clearTimer]);
 
   const handleStartTimer = useCallback(() => {
     if (!focusTask) return;
     startTimer();
-  }, [focusTask]);
+  }, [focusTask, isTimerRunning]);
 
   const handleResetTimer = useCallback(() => {
     resetTimer();
-  }, []);
+  }, [clearTimer]);
 
   const handleAddTwoMin = useCallback(() => {
     addTwoMinutes();
-  }, []);
+  }, [isTimerRunning]);
 
   const completedSteps = focusSteps.filter((s) => s.isCompleted).length;
 
@@ -362,9 +390,31 @@ export function TasksScreen() {
             {breakdownError && <Text style={s.errorText}>{breakdownError}</Text>}
           </>
         ) : (
-          <Text style={s.empty}>
-            Nessun task in focus.{'\n'}Selezionane uno dal backlog o parla con Lior.
-          </Text>
+          <View style={s.emptyWrap}>
+            <Text style={s.empty}>
+              Nessun task in focus.{'\n'}Selezionane uno dal backlog o creane uno nuovo.
+            </Text>
+            <View style={s.quickTaskRow}>
+              <TextInput
+                style={s.quickTaskInput}
+                value={quickTaskInput}
+                onChangeText={setQuickTaskInput}
+                placeholder="Cosa vuoi fare?"
+                placeholderTextColor="#6B7280"
+                returnKeyType="done"
+                onSubmitEditing={handleCreateQuickTask}
+              />
+              <TouchableOpacity
+                style={[s.quickTaskBtn, !quickTaskInput.trim() && s.quickTaskBtnDisabled]}
+                onPress={handleCreateQuickTask}
+                disabled={!quickTaskInput.trim()}
+                accessibilityLabel="Crea task in focus"
+                accessibilityRole="button"
+              >
+                <Icon name="Plus" size={16} color="#0B132B" />
+              </TouchableOpacity>
+            </View>
+          </View>
         )}
       </View>
 
