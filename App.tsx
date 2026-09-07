@@ -10,11 +10,17 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, StatusBar } from 'react-native';
+import { SafeAreaView, StatusBar, Platform } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { enableScreens } from 'react-native-screens';
 import * as SplashScreen from 'expo-splash-screen';
 import { NavigationRoot } from './src/navigation/NavigationRoot';
 import { ThemeProvider, useTheme } from './src/design/ThemeProvider';
 import { useAppFonts } from './src/hooks/useAppFonts';
+
+// Enable native screens + gesture handler for fluid Android gesture support.
+// Must run before any navigator mounts.
+enableScreens(true);
 
 // Keep splash visible while fonts load
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -22,10 +28,13 @@ SplashScreen.preventAutoHideAsync().catch(() => {
 });
 
 function AppShell() {
-  const { colors } = useTheme();
+  const { colors, mode } = useTheme();
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
+      <StatusBar
+        barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.bg}
+      />
       <NavigationRoot />
     </SafeAreaView>
   );
@@ -48,8 +57,10 @@ export default function App() {
   }
 
   return (
-    <ThemeProvider>
-      <AppShell />
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider>
+        <AppShell />
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
