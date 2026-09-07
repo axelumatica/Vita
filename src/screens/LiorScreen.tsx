@@ -331,7 +331,6 @@ export function LiorScreen() {
     >
       {/* ── Top bar ─────────────────────────────────────────────── */}
       <View style={s.topBar}>
-        <Text style={s.processingBadge}>{PROCESSING_DISCLOSURE}</Text>
         <View style={s.topBarRight}>
           <TouchableOpacity
             accessibilityLabel="Svuota appuntino"
@@ -339,7 +338,7 @@ export function LiorScreen() {
             onPress={handleClear}
             style={s.clearBtn}
           >
-            <Text style={s.clearBtnText}>Svuota</Text>
+            <Icon name="X" size={20} color={s.processingBadge.color} />
           </TouchableOpacity>
           <TouchableOpacity
             accessibilityLabel="Impostazioni e modalità emergenza"
