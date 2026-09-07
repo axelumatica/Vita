@@ -412,7 +412,7 @@ export const useVitaStore = create<VitaStore>()(
       },
 
       // ── UI / persona / theme ────────────────────────────────────────
-      themeMode: 'dark',
+      themeMode: 'light',
       setThemeMode: (mode) => set({ themeMode: mode }),
 
       lowStimulus: false,

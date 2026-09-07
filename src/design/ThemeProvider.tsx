@@ -1,4 +1,5 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Appearance, Platform } from 'react-native';
 import { Colors, Radius, Spacing, Fonts, FontSize, LineHeight, Motion, ThemeMode } from './tokens';
 import { useVitaStore } from '../store/vita-store';
 
@@ -15,13 +16,40 @@ type ThemeContextType = {
 
 const ThemeContext = createContext<ThemeContextType | null>(null);
 
+/**
+ * Effective theme = stored preference, or system preference on Android (auto-theme).
+ * On Android we follow the system to feel native; on iOS we honor the explicit choice.
+ */
+function resolveTheme(stored: ThemeMode): ThemeMode {
+  if (Platform.OS === 'android') {
+    return Appearance.getColorScheme() === 'dark' ? 'dark' : 'light';
+  }
+  return stored;
+}
+
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const themeMode = useVitaStore((s) => s.themeMode);
-  const colors = themeMode === 'dark' ? Colors.dark : Colors.light;
+  const [systemScheme, setSystemScheme] = useState(
+    Appearance.getColorScheme() ?? 'light',
+  );
+
+  // Listen for system theme changes on Android
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    const sub = Appearance.addChangeListener(({ colorScheme }) => {
+      setSystemScheme(colorScheme ?? 'light');
+    });
+    return () => sub.remove();
+  }, []);
+
+  const effectiveMode: ThemeMode = Platform.OS === 'android'
+    ? (systemScheme === 'dark' ? 'dark' : 'light')
+    : themeMode;
+  const colors = effectiveMode === 'dark' ? Colors.dark : Colors.light;
 
   return (
     <ThemeContext.Provider value={{
-      mode: themeMode,
+      mode: effectiveMode,
       colors,
       radius: Radius,
       spacing: Spacing,
