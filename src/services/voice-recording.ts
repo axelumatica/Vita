@@ -218,16 +218,3 @@ export async function cancelRecording(): Promise<void> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  Cleanup on module unload
-// ─────────────────────────────────────────────────────────────────────────────
-
-Voice.onSpeechError = (event: { error?: string }) => {
-  if (event.error && onError) {
-    onError({ code: 'RECOGNITION_FAILED', message: event.error });
-  }
-};
-
-Voice.onSpeechVolumeChanged = () => {
-  // Could be used for visual feedback
-};
