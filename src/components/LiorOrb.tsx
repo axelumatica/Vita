@@ -88,7 +88,7 @@ export function LiorOrb({ state, caption, size = 155 }: LiorOrbProps) {
     }
 
     const config: Record<OrbState, { duration: number; targetScale: number; targetGlow: number }> = {
-      idle: { duration: 5000, targetScale: 1.045, targetGlow: 0.25 },
+      idle: { duration: 3200, targetScale: 1.045, targetGlow: 0.25 },
       listening: { duration: 2400, targetScale: 1.15, targetGlow: 0.35 },
       thinking: { duration: 1600, targetScale: 1.05, targetGlow: 0.30 },
       speaking: { duration: 800, targetScale: 1.03, targetGlow: 0.28 },
