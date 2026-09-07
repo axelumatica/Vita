@@ -174,6 +174,43 @@ function useThemedStyles() {
       borderColor: colors.border,
     },
     recentText: { color: colors.textDim, fontSize: 14, lineHeight: 21 },
+    apiKeyBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface2,
+      borderWidth: 1,
+      borderColor: colors.accent,
+      borderRadius: radius.md,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      marginBottom: 16,
+    },
+    apiKeyBannerText: {
+      flex: 1,
+      marginRight: 12,
+    },
+    apiKeyBannerTitle: {
+      color: colors.text,
+      fontSize: 14,
+      fontWeight: '600',
+      marginBottom: 2,
+    },
+    apiKeyBannerHint: {
+      color: colors.textDim,
+      fontSize: 12,
+      lineHeight: 16,
+    },
+    apiKeyBannerBtn: {
+      backgroundColor: colors.accent,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: radius.sm,
+    },
+    apiKeyBannerBtnText: {
+      color: colors.accentInk,
+      fontSize: 13,
+      fontWeight: '700',
+    },
   });
 }
 
@@ -193,6 +230,8 @@ export function HomeScreen() {
   const setFocusTask = useVitaStore((s) => s.setFocusTask);
   const addTaskSteps = useVitaStore((s) => s.addTaskSteps);
 
+  const needsKey = !openRouterApiKey;
+
   const [isBreakingDown, setIsBreakingDown] = useState(false);
 
   const focusTask = vaultEntries.find((e) => e.id === focusTaskId);
@@ -202,7 +241,11 @@ export function HomeScreen() {
   const tod = timeOfDay();
 
   const handleBreakdown = useCallback(async () => {
-    if (!focusTask || !openRouterApiKey) return;
+    if (!focusTask) return;
+    if (!openRouterApiKey) {
+      nav.navigate('Settings');
+      return;
+    }
     setIsBreakingDown(true);
     try {
       const steps = await breakdownTask(focusTask.title, openRouterApiKey, modelSelection?.breakdown);
@@ -212,7 +255,7 @@ export function HomeScreen() {
     } finally {
       setIsBreakingDown(false);
     }
-  }, [focusTask, openRouterApiKey, modelSelection, addTaskSteps]);
+  }, [focusTask, openRouterApiKey, modelSelection, addTaskSteps, nav]);
 
   function handleDone() {
     if (!focusTask) return;
@@ -278,6 +321,26 @@ export function HomeScreen() {
                 <Text style={[s.focusBtnText, s.focusBtnPrimaryText]}>Fatto</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        )}
+
+        {/* API key missing banner */}
+        {needsKey && (
+          <View style={s.apiKeyBanner}>
+            <View style={s.apiKeyBannerText}>
+              <Text style={s.apiKeyBannerTitle}>Chiave OpenRouter mancante</Text>
+              <Text style={s.apiKeyBannerHint}>
+                Le funzionalità IA sono disattivate. Puoi continuare a usare il diario e il vault.
+              </Text>
+            </View>
+            <TouchableOpacity
+              accessibilityLabel="Vai a Impostazioni per configurare la chiave"
+              accessibilityRole="button"
+              style={s.apiKeyBannerBtn}
+              onPress={() => nav.navigate('Settings')}
+            >
+              <Text style={s.apiKeyBannerBtnText}>Configura</Text>
+            </TouchableOpacity>
           </View>
         )}
 

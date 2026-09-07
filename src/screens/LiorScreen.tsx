@@ -108,23 +108,31 @@ export function LiorScreen() {
 
   // ── Helpers ────────────────────────────────────────────────────────────
 
-  function requireKey(): boolean {
-    if (!apiKey) {
-      Alert.alert(
-        'Chiave API mancante',
-        'Vai in Impostazioni per inserire la tua chiave OpenRouter.',
-        [{ text: 'OK' }],
-      );
-      return false;
-    }
-    return true;
-  }
+  const needsKey = !apiKey;
 
   function pushMessage(role: 'user' | 'lior', text: string) {
     setMessages((prev) => [
       ...prev,
       { id: `msg_${Date.now()}`, role, text, timestamp: Date.now() },
     ]);
+  }
+
+  /** Save the current input as a local diary entry (no AI needed). */
+  async function handleSaveLocal() {
+    const text = input.trim();
+    if (!text) return;
+    addEntry({
+      type: 'DIARY',
+      title: text.length > 40 ? text.slice(0, 40) + '…' : text,
+      content: text,
+      isArchived: false,
+      projectClusterId: null,
+      tags: [],
+      confidence: 1,
+      isLowConfidence: false,
+    });
+    setInput('');
+    pushMessage('lior', 'Appunto salvato nel Vault.');
   }
 
   /** Speak Lior's reply aloud via the active voice profile. */
@@ -139,7 +147,7 @@ export function LiorScreen() {
 
   async function handleSend() {
     const text = input.trim();
-    if (!text || !requireKey()) return;
+    if (!text || !apiKey) return;
     setInput('');
     pushMessage('user', text);
 
@@ -243,8 +251,8 @@ export function LiorScreen() {
             // Put the recognized text into the input field
             setInput(result.text);
 
-            // Auto-submit if we have text
-            if (result.text.trim().length > 0) {
+            // Auto-submit only if API key is configured
+            if (result.text.trim().length > 0 && apiKey) {
               handleSend();
             }
           }
@@ -420,6 +428,26 @@ export function LiorScreen() {
         ))}
       </ScrollView>
 
+      {/* ── API key missing warning banner ───────────────────────── */}
+      {needsKey && (
+        <View style={s.apiKeyBanner}>
+          <View style={s.apiKeyBannerText}>
+            <Text style={s.apiKeyBannerTitle}>Chiave OpenRouter mancante</Text>
+            <Text style={s.apiKeyBannerHint}>
+              Le funzionalità IA sono disattivate. Puoi comunque scrivere e salvare testo.
+            </Text>
+          </View>
+          <TouchableOpacity
+            accessibilityLabel="Vai a Impostazioni per configurare la chiave OpenRouter"
+            accessibilityRole="button"
+            style={s.apiKeyBannerBtn}
+            onPress={() => navigation.navigate('Settings')}
+          >
+            <Text style={s.apiKeyBannerBtnText}>Configura</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* ── Voice recording button ──────────────────────── */}
       {isTranscribing ? (
         <View
@@ -480,20 +508,34 @@ export function LiorScreen() {
           style={s.input}
           value={input}
           onChangeText={setInput}
-          placeholder="Scrivi a Lior…"
+          placeholder={needsKey ? 'Scrivi qui — salvataggio locale' : 'Scrivi a Lior…'}
           placeholderTextColor={colors.textFaint}
           multiline={false}
-          returnKeyType="send"
-          onSubmitEditing={handleSend}
+          returnKeyType={needsKey ? 'done' : 'send'}
+          onSubmitEditing={needsKey ? undefined : handleSend}
           editable={!isLoading}
         />
-        <TouchableOpacity
-          style={[s.sendBtn, !input.trim() && s.sendBtnDisabled]}
-          onPress={handleSend}
-          disabled={!input.trim() || isLoading}
-        >
-          <Icon name="ArrowUp" size={20} color={colors.accentInk} />
-        </TouchableOpacity>
+        {needsKey ? (
+          <TouchableOpacity
+            style={[s.sendBtn, !input.trim() && s.sendBtnDisabled]}
+            onPress={handleSaveLocal}
+            disabled={!input.trim() || isLoading}
+            accessibilityLabel="Salva nota locale"
+            accessibilityRole="button"
+          >
+            <Icon name="Check" size={20} color={colors.accentInk} />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[s.sendBtn, !input.trim() && s.sendBtnDisabled]}
+            onPress={handleSend}
+            disabled={!input.trim() || isLoading}
+            accessibilityLabel="Invia a Lior"
+            accessibilityRole="button"
+          >
+            <Icon name="ArrowUp" size={20} color={colors.accentInk} />
+          </TouchableOpacity>
+        )}
       </View>
     </KeyboardAvoidingView>
     <EmergencyOverlay visible={emergencyMode} />
@@ -664,6 +706,44 @@ function useThemedStyles() {
       borderRadius: radius.sm,
     },
     confirmBtnText: {
+      color: colors.accentInk,
+      fontSize: 13,
+      fontWeight: '700',
+    },
+    apiKeyBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface2,
+      borderWidth: 1,
+      borderColor: colors.accent,
+      borderRadius: radius.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      marginHorizontal: spacing.md,
+      marginBottom: spacing.sm,
+    },
+    apiKeyBannerText: {
+      flex: 1,
+      marginRight: spacing.sm,
+    },
+    apiKeyBannerTitle: {
+      color: colors.text,
+      fontSize: fontSize.bodySm,
+      fontWeight: '600',
+      marginBottom: 2,
+    },
+    apiKeyBannerHint: {
+      color: colors.textDim,
+      fontSize: 12,
+      lineHeight: 16,
+    },
+    apiKeyBannerBtn: {
+      backgroundColor: colors.accent,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: radius.sm,
+    },
+    apiKeyBannerBtnText: {
       color: colors.accentInk,
       fontSize: 13,
       fontWeight: '700',

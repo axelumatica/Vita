@@ -462,6 +462,13 @@ export async function* streamChat(
   apiKey: string,
   modelId?: string,
 ): AsyncGenerator<string, string, unknown> {
+  if (!apiKey || apiKey.trim() === '') {
+    throw new LiorError(
+      'NO_API_KEY',
+      'OpenRouter API key not configured. Set it in VoiceSettingsScreen.',
+    );
+  }
+
   const model = modelId
     ? LIOR_MODELS.find((m) => m.id === modelId) ?? defaultModelFor('chat')
     : defaultModelFor('chat');
