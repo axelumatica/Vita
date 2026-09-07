@@ -48,11 +48,8 @@ import type { VaultEntryType } from '../store/vita-store';
 import { VoiceVisualizer } from '../components/VoiceVisualizer';
 import {
   extractTasks,
-  breakdownTask,
   chat,
   streamChat,
-  liorHelpMeThink,
-  liorRereadDump,
   LiorError,
   ExtractionResult,
   ChatMessage,
@@ -165,7 +162,45 @@ export function LiorScreen() {
           ),
         );
       }
-      speakReply(fullReply);
+
+      // Context-aware: automatically extract tasks and diary items
+      let extractionResult: ExtractionResult | null = null;
+      try {
+        extractionResult = await extractTasks(text, apiKey);
+      } catch {
+        // Extraction is best-effort, don't block on it
+      }
+
+      // Update final reply with extraction results
+      let finalReply = fullReply;
+      if (extractionResult) {
+        if (extractionResult.overloadDetected) {
+          speakReply('Sento che sei sovraccarico. Fermiamoci un momento.');
+          setOverloadMode(true);
+          finalReply += '\n\n⚠️ Sento che sei sovraccarico. Fermiamoci un momento.';
+        } else if (extractionResult.items.length > 0) {
+          setLastExtraction(extractionResult);
+          const taskItems = extractionResult.items.filter((i) => !i.isDiary);
+          const diaryItems = extractionResult.items.filter((i) => i.isDiary);
+          if (taskItems.length > 0 || diaryItems.length > 0) {
+            finalReply += '\n\n📋 Ho individuato:';
+            if (taskItems.length > 0) {
+              finalReply += '\n  • ' + taskItems.map(i => i.title).join('\n  • ');
+            }
+            if (diaryItems.length > 0) {
+              finalReply += '\n  💭 ' + diaryItems.map(i => i.title).join('\n  💭 ');
+            }
+            finalReply += '\n\nTocca "Conferma" per salvare nel Vault.';
+          }
+        }
+      }
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === placeholderId ? { ...m, text: finalReply } : m,
+        ),
+      );
+      speakReply(finalReply);
     } catch (err) {
       const msg = err instanceof LiorError ? err.message : 'Errore sconosciuto.';
       setMessages((prev) =>
@@ -178,146 +213,6 @@ export function LiorScreen() {
     } finally {
       setIsLoading(false);
     }
-  }
-
-  async function handleHelpMeThink() {
-    const lastUser = [...messages].reverse().find((m) => m.role === 'user');
-    if (!lastUser) {
-      Alert.alert('Nessun messaggio', 'Scrivi qualcosa prima di chiedere.');
-      return;
-    }
-    if (!requireKey()) return;
-
-    pushMessage('lior', '…');
-    setIsLoading(true);
-    try {
-      const reply = await liorHelpMeThink(lastUser.text, apiKey);
-      setMessages((prev) => {
-        const last = prev[prev.length - 1]!;
-        return [...prev.slice(0, -1), { ...last, text: reply }];
-      });
-      speakReply(reply);
-    } catch (err) {
-      const msg = err instanceof LiorError ? err.message : 'Errore.';
-      setMessages((prev) => {
-        const last = prev[prev.length - 1]!;
-        return [...prev.slice(0, -1), { ...last, text: `[Cloud Engine offline]\n${msg}` }];
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function handleExtract() {
-    const lastUser = [...messages].reverse().find((m) => m.role === 'user');
-    if (!lastUser) {
-      Alert.alert('Nessun messaggio', 'Scrivi qualcosa da cui estrarre un task.');
-      return;
-    }
-    if (!requireKey()) return;
-
-    pushMessage('lior', 'Estraggo…');
-    setIsLoading(true);
-    try {
-      const result: ExtractionResult = await extractTasks(lastUser.text, apiKey);
-
-      if (result.overloadDetected) {
-        speakReply('Sento che sei sovraccarico. Fermiamoci un momento.');
-        setOverloadMode(true);
-        pushMessage(
-          'lior',
-          'Sento che sei sovraccarico. Fermiamoci un momento.\n\nScegli una sola micro-azione per i prossimi 10 minuti: bere un bicchiere d\'acqua, aprire una finestra, o semplicemente sdraiarsi.',
-        );
-        return;
-      }
-
-      if (result.items.length === 0) {
-        pushMessage('lior', 'Non ho trovato task espliciti. Tutto quello che hai detto è andato nel Diario.');
-      } else {
-        // Store the result so the confirm button can persist it.
-        setLastExtraction(result);
-
-        const taskItems = result.items.filter((i) => !i.isDiary);
-        const diaryItems = result.items.filter((i) => i.isDiary);
-        let reply = '';
-        if (taskItems.length > 0) {
-          reply += `Task estratti (${taskItems.length}):\n`;
-          taskItems.forEach((item, i) => {
-            reply += `  ${i + 1}. ${item.title}\n`;
-          });
-        }
-        if (diaryItems.length > 0) {
-          reply += `\nRiflessioni (${diaryItems.length}):\n`;
-          diaryItems.forEach((item) => {
-            reply += `  · ${item.title}\n`;
-          });
-        }
-        reply += '\n\nTocca "Conferma" per salvare nel Vault.';
-        pushMessage('lior', reply.trim());
-        speakReply(reply.trim());
-      }
-    } catch (err) {
-      const msg = err instanceof LiorError ? err.message : 'Errore.';
-      setMessages((prev) => {
-        const last = prev[prev.length - 1]!;
-        return [...prev.slice(0, -1), { ...last, text: `[Cloud Engine offline]\n${msg}` }];
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function handleRereadDump() {
-    const dump = messages
-      .filter((m) => m.role === 'user')
-      .map((m) => m.text)
-      .join('\n');
-    if (!dump) {
-      Alert.alert('Nessun messaggio', 'Scrivi qualcosa prima di chiedere.');
-      return;
-    }
-    if (!requireKey()) return;
-
-    pushMessage('lior', '…');
-    setIsLoading(true);
-    try {
-      const reply = await liorRereadDump(dump, apiKey);
-      setMessages((prev) => {
-        const last = prev[prev.length - 1]!;
-        return [...prev.slice(0, -1), { ...last, text: reply }];
-      });
-      speakReply(reply);
-    } catch (err) {
-      const msg = err instanceof LiorError ? err.message : 'Errore.';
-      setMessages((prev) => {
-        const last = prev[prev.length - 1]!;
-        return [...prev.slice(0, -1), { ...last, text: `[Cloud Engine offline]\n${msg}` }];
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  function handleFreezeEverything() {
-    Alert.alert(
-      'Ferma tutto',
-      'Tutte le notifiche vengono sospese per oggi. Vuoi procedere?',
-      [
-        { text: 'Annulla', style: 'cancel' },
-        {
-          text: 'Ferma',
-          style: 'destructive',
-          onPress: () => {
-            clearScratchpad();
-            setMessages([]);
-            setOverloadMode(true);
-            // Soft haptic feedback for entering emergency mode
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setEmergencyMode(true);
-          },
-        },
-      ],
-    );
   }
 
   // ── Voice recording handlers ─────────────────────────────────────
@@ -525,51 +420,6 @@ export function LiorScreen() {
         ))}
       </ScrollView>
 
-      {/* ── Shortcut buttons ──────────────────────────────────── */}
-      <View style={s.shortcuts}>
-        <TouchableOpacity
-          accessibilityLabel="Aiutami a pensare — ricevi un prompt per riflettere"
-          accessibilityRole="button"
-          style={s.shortcutBtn}
-          onPress={handleHelpMeThink}
-          disabled={isLoading}
-        >
-          <Icon name="Brain" size={16} color={colors.textDim} />
-          <Text style={[s.shortcutText, { marginLeft: 4 }]}>Aiutami a pensare</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          accessibilityLabel="Estrai un task dal testo"
-          accessibilityRole="button"
-          style={s.shortcutBtn}
-          onPress={handleExtract}
-          disabled={isLoading}
-        >
-          <Icon name="Target" size={16} color={colors.textDim} />
-          <Text style={[s.shortcutText, { marginLeft: 4 }]}>Estrai 1 task</Text>
-        </TouchableOpacity>
-      </View>
-      <View style={s.shortcuts}>
-        <TouchableOpacity
-          accessibilityLabel="Rileggi il dump — rivedi tutto il testo"
-          accessibilityRole="button"
-          style={s.shortcutBtn}
-          onPress={handleRereadDump}
-          disabled={isLoading}
-        >
-          <Icon name="Search" size={16} color={colors.textDim} />
-          <Text style={[s.shortcutText, { marginLeft: 4 }]}>Rileggi il dump</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          accessibilityLabel="Ferma tutto — congela l'interfaccia per calmarti"
-          accessibilityRole="button"
-          style={s.shortcutBtn}
-          onPress={handleFreezeEverything}
-          disabled={isLoading}
-        >
-          <Icon name="OctagonAlert" size={16} color={colors.textDim} />
-          <Text style={[s.shortcutText, { marginLeft: 4 }]}>Ferma tutto</Text>
-        </TouchableOpacity>
-      </View>
       {/* ── Voice recording button ──────────────────────── */}
       {isTranscribing ? (
         <View
