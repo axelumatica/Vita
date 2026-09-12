@@ -4,11 +4,11 @@
     "slug": "vita",
     "version": "0.1.0",
     "orientation": "portrait",
-    "icon": "./assets/images/ic_launcher.svg",
+    "icon": "./assets/images/ic_launcher.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
     "splash": {
-      "image": "./assets/images/ic_launcher.svg",
+      "image": "./assets/images/ic_launcher.png",
       "resizeMode": "contain",
       "backgroundColor": "#0B132B",
       "imageWidth": 200,
@@ -17,10 +17,11 @@
     "android": {
       "package": "com.vita.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/ic_launcher_foreground.svg",
-        "backgroundImage": "./assets/images/ic_launcher_background.svg",
+        "foregroundImage": "./assets/images/ic_launcher_foreground.png",
+        "backgroundImage": "./assets/images/ic_launcher_background.png",
         "backgroundColor": "#F4EFE7"
-      }
+      },
+      "minSdkVersion": 24
     },
     "ios": {
       "supportsTablet": true,
@@ -31,8 +32,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "vita-app"
+        "projectId": "29d2ebda-4166-404c-b71c-c95aabe82dfd"
       }
-    }
+    },
+    "owner": "axelumatica"
   }
 }
