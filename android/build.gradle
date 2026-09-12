@@ -40,12 +40,12 @@ allprojects {
     }
 }
 
-subprojects {
-    afterEvaluate { project ->
-        tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-            kotlinOptions {
-                jvmTarget = "17"
-            }
+// Configure Kotlin JVM target for all subprojects lazily — do NOT wrap in
+// afterEvaluate, which throws on Gradle 8.8 ("project already evaluated").
+allprojects {
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            jvmTarget = "17"
         }
     }
 }
